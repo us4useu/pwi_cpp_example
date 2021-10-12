@@ -6,10 +6,10 @@
 
 ## How to build the application
 
-Set valid paths in CMakeLists.txt: https://github.com/pjarosik/pwi_cpp_example/blob/master/CMakeLists.txt#L52-L54
+Set valid paths in CMakeLists.txt: https://github.com/us4useu/pwi_cpp_example/blob/master/CMakeLists.txt#L52-L54
 
 ```
-git clone https://github.com/pjarosik/pwi_cpp_example.git
+git clone https://github.com/us4useu/pwi_cpp_example.git
 mkdir build
 cd build
 conan install ..

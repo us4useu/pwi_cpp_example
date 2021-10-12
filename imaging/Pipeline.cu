@@ -18,7 +18,16 @@
 #include "NdArray.h"
 
 namespace imaging {
-#include "../common.h"
+
+std::vector<float> arange(float l, float r, float step) {
+    std::vector<float> result;
+    float currentPos = l;
+    while(currentPos <= r) {
+        result.push_back(currentPos);
+        currentPos += step;
+    }
+    return result;
+}
 
 // grid OX coordinates
 constexpr float X_PIX_L = -19.0e-3f, X_PIX_R = 19.0e-3f, X_PIX_STEP = 0.1e-3;
@@ -143,11 +152,10 @@ private:
 std::shared_ptr<Pipeline> createPwiImagingPipeline(
         const std::vector<unsigned> &inputShape,
         int8_t *fcmChannels, uint16_t *fcmFrames,
-        unsigned nTx, unsigned nElements, unsigned nSamples, unsigned startSample,
-        const std::vector<float> &angles,
+        unsigned nTx, const std::vector<float> &angles,
+        unsigned nElements, unsigned nSamples, unsigned startSample,
         float pitch, float samplingFrequency, float txFrequency,
-        float txNPeriods,
-        float speedOfSound) {
+        float txNPeriods, float speedOfSound) {
 
     // Wrap frame channel mapping into NdArrays.
     std::vector<unsigned> fcmArrayShape{static_cast<unsigned int>(nTx), nElements};

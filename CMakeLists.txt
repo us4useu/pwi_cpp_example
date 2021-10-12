@@ -45,22 +45,25 @@ target_compile_definitions(arrus-imaging PRIVATE IMAGING_BUILD_STAGE)
 set(CMAKE_CXX_STANDARD 17)
 set(MAIN_SRC
     main.cpp
+    gui.h
+    pwi.h
+    pwi.cpp
+    menu.h
+    menu.cpp
     common.h
-    logging/MyCustomLoggerFactory.h logging/MyCustomLogger.h cfg.h Display2D.h)
+    common.cpp
+    logging/MyCustomLoggerFactory.h
+    logging/MyCustomLogger.h
+)
 
 # TODO change the below path appropriately.
-set(ARRUS_INCLUDE_PATH "C:/Users/pjarosik/arrus/include")
+set(ARRUS_INCLUDE_PATH "/home/pjarosik/libs/releases/arrus/v0.6.2/include")
 # TODO change the below path appropriately.
-set(ARRUS_LIB_PATH "C:/Users/pjarosik/arrus/lib64")
+set(ARRUS_LIB_PATH "/home/pjarosik/libs/releases/arrus/v0.6.2/lib64")
 
 add_executable(pwi_example ${MAIN_SRC})
 target_link_directories(pwi_example PRIVATE ${ARRUS_LIB_PATH})
 target_link_libraries(pwi_example PRIVATE arrus-core arrus-imaging opencv::opencv)
 target_include_directories(pwi_example PRIVATE ${ARRUS_INCLUDE_PATH})
-
-add_executable(async_example async.cpp)
-target_link_directories(async_example PRIVATE ${ARRUS_LIB_PATH})
-target_link_libraries(async_example PRIVATE arrus-core)
-target_include_directories(async_example PRIVATE ${ARRUS_INCLUDE_PATH})
 
 

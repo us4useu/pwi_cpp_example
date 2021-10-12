@@ -3,7 +3,6 @@
 
 #include <utility>
 #include <vector>
-#include <chrono>
 #include <algorithm>
 #include <functional>
 #include "DataType.h"
@@ -25,9 +24,7 @@ class Pipeline {
 public:
     virtual ~Pipeline() = default;
 
-    virtual void process(int16_t *data,
-                         void (*processingCallback)(void *),
-                         void (*hostRfReleaseFunction)(void *),
+    virtual void process(int16_t *data, void (*processingCallback)(void *), void (*hostRfReleaseFunction)(void *),
                          void *releasedRfElement) = 0;
 
     virtual const std::vector<unsigned> &getOutputShape() const = 0;
@@ -36,12 +33,12 @@ public:
 
 IMAGING_CPP_EXPORT
 std::shared_ptr<Pipeline> createPwiImagingPipeline(
-        const std::vector<unsigned> &inputShape,
-        int8_t *fcmChannels, uint16_t *fcmFrames,
-        unsigned nTx, unsigned nElements, unsigned nSamples, unsigned startSample,
-        const std::vector<float> &angles,
-        float pitch, float samplingFrequency, float txFrequency, float nTxPeriods,
-        float speedOfSound);
+    const std::vector<unsigned> &inputShape,
+    int8_t *fcmChannels, uint16_t *fcmFrames,
+    unsigned nTx, const std::vector<float> &angles,
+    unsigned nElements, unsigned nSamples, unsigned startSample,
+    float pitch, float samplingFrequency, float txFrequency, float nTxPeriods,
+    float speedOfSound);
 }
 
 

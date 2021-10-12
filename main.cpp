@@ -55,7 +55,7 @@ int main() noexcept {
         PwiSequence seq {
             txAngles, // a list of transmit angles [rad]
             arrus::ops::us4r::Pulse(
-                6e6,  // center frequency [Hz]
+                6e6f,  // center frequency [Hz]
                 2,    // number of sine wave periods
                 false // inverse?
             ),

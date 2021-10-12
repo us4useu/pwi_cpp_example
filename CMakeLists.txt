@@ -35,7 +35,7 @@ add_library(arrus-imaging SHARED ${ARRUS_IMAGING_PIPELINE_SRC})
 set_target_properties(arrus-imaging
     PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON
-    CUDA_ARCHITECTURES 75
+    CUDA_ARCHITECTURES 52
 )
 target_compile_definitions(arrus-imaging PRIVATE IMAGING_BUILD_STAGE)
 
@@ -57,9 +57,9 @@ set(MAIN_SRC
 )
 
 # TODO change the below path appropriately.
-set(ARRUS_INCLUDE_PATH "/home/pjarosik/libs/releases/arrus/v0.6.2/include")
+set(ARRUS_INCLUDE_PATH "C:/Users/Public/arrus-releases/v0.6.2/include")
 # TODO change the below path appropriately.
-set(ARRUS_LIB_PATH "/home/pjarosik/libs/releases/arrus/v0.6.2/lib64")
+set(ARRUS_LIB_PATH "C:/Users/Public/arrus-releases/v0.6.2/lib64")
 
 add_executable(pwi_example ${MAIN_SRC})
 target_link_directories(pwi_example PRIVATE ${ARRUS_LIB_PATH})

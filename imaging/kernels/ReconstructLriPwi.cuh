@@ -157,7 +157,7 @@ public:
         for (int i = 0; i < nTx; ++i) {
             initDelays[i] =
             -(startSample/65e6f) // start sample (via nominal sampling frequency)
-            + 0.5f*(nElements-1)*pitch*abs(tanf(txAngle[i]))/speedOfSound // TX delay of the aperture's center
+            + 0.5f*(nElements-1)*pitch*abs(sinf(txAngle[i]))/speedOfSound // TX delay of the aperture's center
             + burstFactor;
         }
         CUDA_ASSERT(cudaMemcpyToSymbol(

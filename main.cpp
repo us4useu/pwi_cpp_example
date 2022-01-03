@@ -158,7 +158,8 @@ std::shared_ptr<::imaging::Pipeline> createImagingPipeline(Session *session, con
         fcmChannels.data(), fcmFrames.data(),
         nTx, seq.getAngles(),
         nElements, nSamples, sampleStart,
-        probeModel.getPitch()[0], SAMPLING_FREQUENCY, seq.getPulse().getCenterFrequency(),seq.getPulse().getNPeriods(),
+        probeModel.getPitch()[0], SAMPLING_FREQUENCY/seq.getDownsamplingFactor(),
+        seq.getPulse().getCenterFrequency(),seq.getPulse().getNPeriods(),
         seq.getSpeedOfSound());
 }
 

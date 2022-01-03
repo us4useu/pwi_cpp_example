@@ -31,8 +31,10 @@ TxRxSequence createPwiSequence(const PwiSequence &seq, const arrus::devices::Pro
         for (int i = 0; i < nElements; ++i) {
             delays[i] -= minDelay;
         }
-        txrxs.emplace_back(Tx(txAperture, delays, seq.getPulse()), Rx(rxAperture, seq.getSampleRange()),
-                           seq.getPri());
+        txrxs.emplace_back(
+            Tx(txAperture, delays, seq.getPulse()),
+            Rx(rxAperture, seq.getSampleRange(), seq.getDownsamplingFactor()),
+            seq.getPri());
     }
     float sri = seq.getSri().has_value() ? seq.getSri().value() : TxRxSequence::NO_SRI;
     return TxRxSequence{txrxs, {}, sri};

@@ -1,7 +1,7 @@
 #ifndef CPP_EXAMPLE_KERNELS_LPFILTERSINGLETON_CUH
 #define CPP_EXAMPLE_KERNELS_LPFILTERSINGLETON_CUH
 
-#include "Kernel.cuh"
+#include "../Kernel.h"
 
 namespace imaging {
 

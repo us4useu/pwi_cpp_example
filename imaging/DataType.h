@@ -4,12 +4,16 @@
 namespace imaging {
 
 enum class DataType {
+    UINT8,
+    INT8,
     UINT16,
     INT16,
-    COMPLEX64,
+    UINT32,
+    INT32,
     FLOAT32,
-    UINT8,
-    INT8
+    FLOAT64,
+    COMPLEX64,
+    COMPLEX128
 };
 
 };

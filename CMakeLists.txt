@@ -6,38 +6,28 @@ project(cpp_example LANGUAGES CXX CUDA)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_BINARY_DIR}")
 find_package(OpenCV REQUIRED)
 
-# Imaging pipeline source files and target.
-# Imaging pipeline is compiled due to the lack of support of C++17 standard
-# for nvcc ver. 10.0.
-# C++17 standard is required by arrus package.
-set(ARRUS_IMAGING_PIPELINE_SRC
+set(GPU_SRC
     # Imaging
-    imaging/kernels/Decimation.cuh
-    imaging/kernels/EnvelopeDetection.cuh
-    imaging/kernels/FirFilterSingleton.cuh
-    imaging/kernels/Kernel.cuh
-    imaging/kernels/KernelInitContext.h
-    imaging/kernels/KernelInitResult.h
-    imaging/kernels/LpFilterSingleton.cuh
-    imaging/kernels/QuadratureDemodulation.cuh
-    imaging/kernels/ReconstructLriPwi.cuh
-    imaging/kernels/RemapToLogicalOrder.cuh
-    imaging/kernels/Sum.h
-    imaging/kernels/ToBmode.cuh
-    imaging/kernels/Transpose.cuh
+#    imaging/kernels/Decimation.cuh
+#    imaging/kernels/EnvelopeDetection.cuh
+#    imaging/kernels/FirFilterSingleton.cuh
+#    imaging/kernels/Kernel.cuh
+#    imaging/kernels/KernelConstructionContext.h
+#    imaging/kernels/KernelInitResult.h
+#    imaging/kernels/LpFilterSingleton.cuh
+#    imaging/kernels/QuadratureDemodulation.cuh
+#    imaging/kernels/ReconstructLriPwi.cuh
+#    imaging/kernels/RemapToLogicalOrder.cuh
+#    imaging/kernels/Sum.h
+#    imaging/kernels/ToBmode.cuh
+#    imaging/kernels/Transpose.cuh
     imaging/CudaUtils.cuh
-    imaging/NdArray.h
-    imaging/Pipeline.cuh
-    imaging/Pipeline.cu
-    imaging/DataType.h)
-
-add_library(arrus-imaging SHARED ${ARRUS_IMAGING_PIPELINE_SRC})
-set_target_properties(arrus-imaging
-    PROPERTIES
-    CUDA_SEPARABLE_COMPILATION ON
-    CUDA_ARCHITECTURES 52
+    imaging/kernels/RemapToLogicalOrder.cu
 )
-target_compile_definitions(arrus-imaging PRIVATE IMAGING_BUILD_STAGE)
+
+add_library(pwi_example_gpu ${GPU_SRC})
+set_target_properties(pwi_example_gpu PROPERTIES CUDA_ARCHITECTURES 52)
+
 
 # Main executable file.
 # ARRUS package requires a compiler with C++17 support at least.
@@ -52,18 +42,31 @@ set(MAIN_SRC
     menu.cpp
     common.h
     common.cpp
+
     logging/MyCustomLoggerFactory.h
     logging/MyCustomLogger.h
+
+    imaging/NdArray.h
+    imaging/DataType.h
+
+    imaging/Kernel.h
+    imaging/KernelConstructionContext.h
+    imaging/KernelExecutionContext.h
+    imaging/Metadata.h
+
+    imaging/Pipeline.h
+    imaging/Pipeline.cpp
+    imaging/kernels/RemapToLogicalOrder.cpp
 )
 
 # TODO change the below path appropriately.
-set(ARRUS_INCLUDE_PATH "C:/Users/Public/arrus-releases/v0.6.2/include")
+set(ARRUS_INCLUDE_PATH "/opt/arrus/develop/include")
 # TODO change the below path appropriately.
-set(ARRUS_LIB_PATH "C:/Users/Public/arrus-releases/v0.6.2/lib64")
+set(ARRUS_LIB_PATH "/opt/arrus/develop/lib64")
 
 add_executable(pwi_example ${MAIN_SRC})
 target_link_directories(pwi_example PRIVATE ${ARRUS_LIB_PATH})
-target_link_libraries(pwi_example PRIVATE arrus-core arrus-imaging opencv::opencv)
 target_include_directories(pwi_example PRIVATE ${ARRUS_INCLUDE_PATH})
+target_link_libraries(pwi_example PRIVATE pwi_example_gpu opencv::opencv)
 
 

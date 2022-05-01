@@ -17,7 +17,7 @@ using namespace ::arrus::framework;
 #include "common.h"
 // My custom logger, which I register in arrus.
 #include "logging/MyCustomLoggerFactory.h"
-#include "imaging/Pipeline.cuh"
+#include "imaging/Pipeline.h"
 #include "gui.h"
 #include "menu.h"
 #include "pwi.h"
@@ -135,7 +135,6 @@ std::shared_ptr<::imaging::Pipeline> createImagingPipeline(Session *session, con
     auto nSamples = seq.getSampleRange().second-seq.getSampleRange().first;
 
     // -- Determine number of frames per TX/RX.
-    // Note: this code is currently
     constexpr unsigned N_US4OEMS = 2;
     constexpr unsigned US4OEM_N_RX = 32;
 

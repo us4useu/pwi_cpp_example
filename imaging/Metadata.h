@@ -1,25 +1,15 @@
 #ifndef CPP_EXAMPLE_METADATA_H
 #define CPP_EXAMPLE_METADATA_H
 
-struct Metadata {
+#include <unordered_map>
+#include <string>
 
-    Metadata(unsigned int nSamples, float transmitFrequency,
-             float samplingFrequency, float speedOfSound, float curvatureRadius,
-             float pitch, float nPeriods)
-        : nSamples(nSamples),
-          transmitFrequency(transmitFrequency),
-          samplingFrequency(samplingFrequency),
-          speedOfSound(speedOfSound),
-          curvatureRadius(curvatureRadius),
-          pitch(pitch), nPeriods(nPeriods) {}
-
-    unsigned nSamples;
-    float transmitFrequency;
-    float samplingFrequency;
-    float speedOfSound;
-    float curvatureRadius;
-    float pitch;
-    float nPeriods;
+class Metadata {
+public:
+    using Key = std::string;
+    using Value = 
+private:
+    std::unordered_map<MetadataKey
 };
 
 

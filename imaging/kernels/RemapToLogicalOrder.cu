@@ -3,9 +3,9 @@
 
 #include "../CudaUtils.cuh"
 #include "../NdArray.h"
-#include "KernelInitResult.h"
-#include "KernelInitContext.h"
-#include "Kernel.cuh"
+#include "../KernelInitResult.h"
+#include "../KernelConstructionContext.h"
+#include "../Kernel.h"
 
 namespace imaging {
 __global__ void arrusRemap(short *out, const short *in,

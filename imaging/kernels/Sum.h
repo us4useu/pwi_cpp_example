@@ -1,7 +1,7 @@
 #ifndef CPP_EXAMPLE_KERNELS_SUM_H_
 #define CPP_EXAMPLE_KERNELS_SUM_H_
 
-#include "Kernel.cuh"
+#include "../Kernel.h"
 
 namespace imaging {
 

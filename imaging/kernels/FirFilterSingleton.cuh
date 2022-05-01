@@ -1,7 +1,7 @@
 #ifndef CPP_EXAMPLE_KERNELS_FIRFILTERSINGLETON_CUH
 #define CPP_EXAMPLE_KERNELS_FIRFILTERSINGLETON_CUH
 
-#include "Kernel.cuh"
+#include "../Kernel.h"
 namespace imaging {
 
 #define MAX_FIR_SIZE 512

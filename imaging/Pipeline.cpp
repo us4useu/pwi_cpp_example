@@ -1,28 +1,18 @@
 #include <cmath>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
-
-#include "kernels/RemapToLogicalOrder.cuh"
-#include "kernels/Transpose.cuh"
-#include "kernels/FirFilterSingleton.cuh"
-#include "kernels/QuadratureDemodulation.cuh"
-#include "kernels/Decimation.cuh"
-#include "kernels/LpFilterSingleton.cuh"
-#include "kernels/EnvelopeDetection.cuh"
-#include "kernels/ToBmode.cuh"
-#include "kernels/ReconstructLriPwi.cuh"
-#include "kernels/Sum.h"
-#include "Pipeline.cuh"
+#include "Kernel.h"
 #include "Metadata.h"
 #include "NdArray.h"
+#include "Pipeline.h"
 
 namespace imaging {
 
 std::vector<float> arange(float l, float r, float step) {
     std::vector<float> result;
     float currentPos = l;
-    while(currentPos <= r) {
+    while (currentPos <= r) {
         result.push_back(currentPos);
         currentPos += step;
     }
@@ -36,21 +26,19 @@ constexpr float Z_PIX_L = 5e-3f, Z_PIX_R = 42.5e-3f, Z_PIX_STEP = 0.1e-3;
 
 // Hanning window, band (0.5, 1.5)*TX_FREQUENCY, order 64
 const std::vector<float> BANDPASS_FILTER_COEFFS
-// taps for Butterworth filter, 0.5, 1.5 * 6 MHz, order 2
-    {0.05892954,  0.        , -0.11785907,  0.        ,  0.05892954};
+    // taps for Butterworth filter, 0.5, 1.5 * 6 MHz, order 2
+    {0.05892954, 0., -0.11785907, 0., 0.05892954};
 
 // Low-pass CIC filter cooefficients.
 const std::vector<float> LOWPASS_FILTER_COEFFS{1, 2, 3, 4, 3, 2, 1};
 
 class PipelineImpl : public Pipeline {
 public:
-    PipelineImpl(std::vector<Kernel::Handle> kernels,
-                 NdArray::DataShape inputShape,
-                 NdArray::DataType inputDtype, float samplingFrequency)
-            : kernels(std::move(kernels)),
-              inputShape(std::move(inputShape)), inputDtype(inputDtype),
-              samplingFrequency(samplingFrequency) {
-        inputGpu = NdArray{this->inputShape, this->inputDtype, true};
+    PipelineImpl(std::vector<Kernel::Handle> kernels, NdArray::DataShape inputShape, NdArray::DataType inputDataType,
+                 float inputSamplingFrequency)
+        : kernels(std::move(kernels)), inputShape(std::move(inputShape)), inputDataType(inputDataType),
+          inputSamplingFrequency(inputSamplingFrequency) {
+        inputGpu = NdArray{this->inputShape, this->inputDataType, true};
         CUDA_ASSERT(cudaStreamCreate(&processingStream));
         CUDA_ASSERT(cudaStreamCreate(&inputDataStream));
         prepare();
@@ -62,28 +50,25 @@ public:
     }
 
     void prepare() {
-        float currentSamplingFrequency = samplingFrequency;
+        float fs = inputSamplingFrequency;
         NdArray::DataShape shape = inputShape;
-        NdArray::DataType dataType = inputDtype;
-        for (auto &kernel: kernels) {
-            KernelInitContext kernelInitContext(
-                    shape, dataType, currentSamplingFrequency);
-            auto prepareOutput = kernel->prepare(kernelInitContext);
-            kernelOutputs.emplace_back(prepareOutput.GetOutputShape(),
-                                       prepareOutput.GetOutputDtype(),
-                                       true);
-            shape = prepareOutput.GetOutputShape();
-            dataType = prepareOutput.GetOutputDtype();
-            currentSamplingFrequency = prepareOutput.getSamplingFrequency();
+        NdArray::DataType dataType = inputDataType;
+        for (auto &kernel : kernels) {
+            KernelConstructionContext ctx(shape, dataType, fs);
+            // TODO prepare op input/output buffers
+            // TODO prepare class "Tensor"? "NdArrayDef"?
+            auto kernel = KernelRegistry::getKernel(ctx);
+            kernels.push_back(std::move(kernel));
+            shape = ctx.getOutputShape();
+            dataType = ctx.getOutputDataType();
+            fs = ctx.getSamplingFrequency();
         }
         outputShape = shape;
         outputDtype = dataType;
         outputHost = NdArray(shape, dataType, false);
     }
 
-    void process(int16_t *data,
-                 void (*processingCallback)(void *),
-                 void (*hostRfReleaseFunction)(void *),
+    void process(int16_t *data, void (*processingCallback)(void *), void (*hostRfReleaseFunction)(void *),
                  void *releasedElement) override {
         // NOTE: data transfers H2D, D2H and processing are intentionally
         // serialized here into a single 'processingStream', for the sake
@@ -94,54 +79,44 @@ public:
         // consumer.
 
         // Wrap pointer to the input data into NdArray object.
-        NdArray inputHost{data, inputShape, inputDtype, false};
+        NdArray inputHost{data, inputShape, inputDataType, false};
         // Transfer data H2D.
-        CUDA_ASSERT(cudaMemcpyAsync(
-                inputGpu.getPtr<void>(),
-                inputHost.getPtr<void>(), inputHost.getNBytes(),
-                cudaMemcpyHostToDevice, processingStream));
+        CUDA_ASSERT(cudaMemcpyAsync(inputGpu.getPtr<void>(), inputHost.getPtr<void>(), inputHost.getNBytes(),
+                                    cudaMemcpyHostToDevice, processingStream));
         // Release host RF buffer element after transferring the data.
-        CUDA_ASSERT(cudaLaunchHostFunc(processingStream, hostRfReleaseFunction,
-                                       releasedElement));
+        CUDA_ASSERT(cudaLaunchHostFunc(processingStream, hostRfReleaseFunction, releasedElement));
 
         // Execute a sequence of pipeline kernels.
         NdArray *currentInput = &inputGpu;
         NdArray *currentOutput = &inputGpu;
         for (size_t kernelNr = 0; kernelNr < kernels.size(); ++kernelNr) {
             currentOutput = &(kernelOutputs[kernelNr]);
-            kernels[kernelNr]->process(currentOutput, currentInput,
-                                       processingStream);
+            kernels[kernelNr]->process(currentOutput, currentInput, processingStream);
             currentInput = currentOutput;
         }
         // Transfer data D2H.
-        CUDA_ASSERT( cudaMemcpyAsync(
-                outputHost.getPtr<void>(),
-                currentOutput->getPtr<void>(), outputHost.getNBytes(),
-            cudaMemcpyDeviceToHost, processingStream));
+        CUDA_ASSERT(cudaMemcpyAsync(outputHost.getPtr<void>(), currentOutput->getPtr<void>(), outputHost.getNBytes(),
+                                    cudaMemcpyDeviceToHost, processingStream));
         CUDA_ASSERT(cudaStreamSynchronize(processingStream));
         processingCallback(outputHost.getPtr<void>());
         // There seems to be some issues when calling opencv::imshow in cuda callback,
         // so I had to use cudaStreamSynchronize here.
-//        CUDA_ASSERT(cudaLaunchHostFunc(processingStream, processingCallback, outputHost.getPtr<void>()));
+        //        CUDA_ASSERT(cudaLaunchHostFunc(processingStream, processingCallback, outputHost.getPtr<void>()));
     }
 
-    const NdArray::DataShape &getOutputShape() const {
-        return outputShape;
-    }
+    const NdArray::DataShape &getOutputShape() const { return outputShape; }
 
-    DataType getOutputDataType() const {
-        return outputDtype;
-    }
+    DataType getOutputDataType() const { return outputDtype; }
 
 private:
     std::vector<Kernel::Handle> kernels;
     NdArray inputGpu, outputHost;
     std::vector<NdArray> kernelOutputs;
     NdArray::DataShape inputShape;
-    NdArray::DataType inputDtype;
+    NdArray::DataType inputDataType;
     NdArray::DataShape outputShape;
     NdArray::DataType outputDtype;
-    float samplingFrequency;
+    float inputSamplingFrequency;
     cudaStream_t processingStream{}, inputDataStream;
 
     void (*gpuElementReleaseFunction)(void *);
@@ -149,13 +124,11 @@ private:
 
 #define ADD_KERNEL(kernelName, ...) kernels.push_back(std::make_unique<kernelName>(__VA_ARGS__))
 
-std::shared_ptr<Pipeline> createPwiImagingPipeline(
-        const std::vector<unsigned> &inputShape,
-        int8_t *fcmChannels, uint16_t *fcmFrames,
-        unsigned nTx, const std::vector<float> &angles,
-        unsigned nElements, unsigned nSamples, unsigned startSample,
-        float pitch, float samplingFrequency, float txFrequency,
-        float txNPeriods, float speedOfSound) {
+std::shared_ptr<Pipeline> createPwiImagingPipeline(const std::vector<unsigned> &inputShape, int8_t *fcmChannels,
+                                                   uint16_t *fcmFrames, unsigned nTx, const std::vector<float> &angles,
+                                                   unsigned nElements, unsigned nSamples, unsigned startSample,
+                                                   float pitch, float samplingFrequency, float txFrequency,
+                                                   float txNPeriods, float speedOfSound) {
 
     // Wrap frame channel mapping into NdArrays.
     std::vector<unsigned> fcmArrayShape{static_cast<unsigned int>(nTx), nElements};
@@ -176,10 +149,8 @@ std::shared_ptr<Pipeline> createPwiImagingPipeline(
     // input dimensions: (nTxMuxed*nSamples*nUs4OEM, 32)
     // output dimensions: (nTx, nSamples, nElements)
     // output data type: int16
-    ADD_KERNEL(RemapToLogicalOrder,
-               std::move(fcmChannelsArray.copyToDevice()),
-               std::move(fcmFramesArray.copyToDevice()),
-               nSamples);
+    ADD_KERNEL(RemapToLogicalOrder, std::move(fcmChannelsArray.copyToDevice()),
+               std::move(fcmFramesArray.copyToDevice()), nSamples);
     // Transpose data from (nTx, nSamples, nElements) to (nTx, nElements, nSamples)
     //
     // input dimensions: (nTx, nSamples, nElements)
@@ -221,10 +192,8 @@ std::shared_ptr<Pipeline> createPwiImagingPipeline(
     // output data type: (float32, float32)
     // maxTang value determines RX apodization max angle.
     float maxTang = tanf(asinf(std::min(1.0f, (float) (speedOfSound / txFrequency * 2 / 3) / pitch)));
-    ADD_KERNEL(ReconstructLriPwi, zPix, xPix, angles,
-               -maxTang, maxTang,
-               startSample,
-               txFrequency, speedOfSound, pitch, txNPeriods);
+    ADD_KERNEL(ReconstructLriPwi, zPix, xPix, angles, -maxTang, maxTang, startSample, txFrequency, speedOfSound, pitch,
+               txNPeriods);
     // Sum input data along the first dimension.
     // This is a very simple conversion from an array of LRIs to HRI
     //
@@ -245,15 +214,8 @@ std::shared_ptr<Pipeline> createPwiImagingPipeline(
     // output data type: uint8
     ADD_KERNEL(ToBmode, 20, 80);
 
-
-    std::shared_ptr<Pipeline> result = std::make_shared<PipelineImpl>(
-            std::move(kernels),
-            inputShape,
-            NdArray::DataType::INT16,
-            samplingFrequency);
+    std::shared_ptr<Pipeline> result =
+        std::make_shared<PipelineImpl>(std::move(kernels), inputShape, NdArray::DataType::INT16, samplingFrequency);
     return result;
 }
-}
-
-
-
+}// namespace imaging

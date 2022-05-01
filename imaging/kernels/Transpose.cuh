@@ -1,7 +1,7 @@
 #ifndef CPP_EXAMPLE_KERNELS_TRANSPOSE_H
 #define CPP_EXAMPLE_KERNELS_TRANSPOSE_H
 
-#include "Kernel.cuh"
+#include "../Kernel.h"
 #include "../NdArray.h"
 
 namespace imaging {

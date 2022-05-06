@@ -5,6 +5,10 @@ project(cpp_example LANGUAGES CXX CUDA)
 # -- add it to CMAKE_MODULE_PATH, so we can use e.g. OpenCV package.
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_BINARY_DIR}")
 find_package(OpenCV REQUIRED)
+# TODO change the below path appropriately.
+set(ARRUS_INCLUDE_PATH /home/pjarosik/lib/local/arrus/develop/include)
+# TODO change the below path appropriately.
+set(ARRUS_LIB_PATH /home/pjarosik/lib/local/arrus/develop/lib64)
 
 set(GPU_SRC
     # Imaging
@@ -21,13 +25,13 @@ set(GPU_SRC
 #    imaging/kernels/Sum.h
 #    imaging/kernels/ToBmode.cuh
 #    imaging/kernels/Transpose.cuh
-    imaging/CudaUtils.cuh
+    imaging/CudaUtils.cu
     imaging/kernels/RemapToLogicalOrder.cu
 )
 
 add_library(pwi_example_gpu ${GPU_SRC})
+target_include_directories(pwi_example_gpu PRIVATE ${CMAKE_SOURCE_DIR})
 set_target_properties(pwi_example_gpu PROPERTIES CUDA_ARCHITECTURES 52)
-
 
 # Main executable file.
 # ARRUS package requires a compiler with C++17 support at least.
@@ -42,6 +46,7 @@ set(MAIN_SRC
     menu.cpp
     common.h
     common.cpp
+    imaging/utils.h
 
     logging/MyCustomLoggerFactory.h
     logging/MyCustomLogger.h
@@ -49,24 +54,26 @@ set(MAIN_SRC
     imaging/NdArray.h
     imaging/DataType.h
 
+    imaging/Operation.h
     imaging/Kernel.h
     imaging/KernelConstructionContext.h
     imaging/KernelExecutionContext.h
     imaging/Metadata.h
 
-    imaging/Pipeline.h
-    imaging/Pipeline.cpp
+    imaging/PipelineRunner.h
+    imaging/PipelineRunner.cpp
+
+    imaging/ops/Pipeline.h
+
+    imaging/ops/RemapToLogicalOrder.h
     imaging/kernels/RemapToLogicalOrder.cpp
 )
 
-# TODO change the below path appropriately.
-set(ARRUS_INCLUDE_PATH "/opt/arrus/develop/include")
-# TODO change the below path appropriately.
-set(ARRUS_LIB_PATH "/opt/arrus/develop/lib64")
+
 
 add_executable(pwi_example ${MAIN_SRC})
+target_include_directories(pwi_example PRIVATE ${ARRUS_INCLUDE_PATH} ${CMAKE_SOURCE_DIR})
 target_link_directories(pwi_example PRIVATE ${ARRUS_LIB_PATH})
-target_include_directories(pwi_example PRIVATE ${ARRUS_INCLUDE_PATH})
-target_link_libraries(pwi_example PRIVATE pwi_example_gpu opencv::opencv)
+target_link_libraries(pwi_example PRIVATE pwi_example_gpu opencv::opencv arrus-core)
 
 

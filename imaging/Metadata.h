@@ -1,16 +1,85 @@
 #ifndef CPP_EXAMPLE_METADATA_H
 #define CPP_EXAMPLE_METADATA_H
 
-#include <unordered_map>
+#include <memory>
 #include <string>
+#include <unordered_map>
+
+namespace imaging {
+
+class MetadataBuilder;
 
 class Metadata {
 public:
-    using Key = std::string;
-    using Value = 
+    using Handle = std::unique_ptr<Metadata>;
+    using SharedHandle = std::shared_ptr<Metadata>;
+
+    Metadata() = default;
+
+    explicit Metadata(std::unordered_map<std::string, std::shared_ptr<void>> ptrs,
+                      std::unordered_map<std::string, float> values)
+        : ptrs(std::move(ptrs)), values(std::move(values)) {}
+
+    /**
+     * Returns metadata for the given key.
+     *
+     * @tparam T output type
+     * @param key metadata key
+     * @return metadata value for given key
+     */
+    template<typename T> std::shared_ptr<T> getObject(const std::string &key) {
+        try {
+            return std::static_pointer_cast<T>(ptrs.at(key));
+        } catch (std::out_of_range &e) { throw std::out_of_range{"There is no object in metadata with key: " + key}; }
+    }
+
+    float getValue(const std::string &key) {
+        try {
+            return values.at(key);
+        } catch (std::out_of_range &e) { throw std::out_of_range{"There is no value in metadata with key: " + key}; }
+    }
+
 private:
-    std::unordered_map<MetadataKey
+    friend class MetadataBuilder;
+    std::unordered_map<std::string, std::shared_ptr<void>> ptrs;
+    std::unordered_map<std::string, float> values;
 };
 
+class MetadataBuilder {
+public:
+    MetadataBuilder() = default;
 
-#endif //CPP_EXAMPLE_METADATA_H
+    explicit MetadataBuilder(const Metadata &metadata) : ptrs(metadata.ptrs), values(metadata.values) {}
+
+    template<typename T> std::shared_ptr<T> getObject(const std::string &key) {
+        try {
+            return std::static_pointer_cast<T>(ptrs.at(key));
+        } catch (std::out_of_range &e) { throw std::out_of_range{"There is no object in metadata with key: " + key}; }
+    }
+
+    float getValue(const std::string &key) {
+        try {
+            return values.at(key);
+        } catch (std::out_of_range &e) { throw std::out_of_range{"There is no value in metadata with key: " + key}; }
+    }
+
+    template<typename T> void addObject(const std::string &key, const std::shared_ptr<T> &ptr) {
+        ptrs.insert({key, std::static_pointer_cast<void>(ptr)});
+    }
+
+    void setValue(const std::string &key, float value) {
+        values.insert({key, value});
+    }
+
+    Metadata build() {
+        return Metadata(ptrs, values);
+    }
+
+private:
+    std::unordered_map<std::string, std::shared_ptr<void>> ptrs;
+    std::unordered_map<std::string, float> values;
+};
+
+}// namespace imaging
+
+#endif

@@ -10,7 +10,7 @@ class Kernel {
 public:
     typedef std::unique_ptr<Kernel> Handle;
 
-    explict Kernel(KernelConstructionContext &ctx) {}
+    explicit Kernel(KernelConstructionContext &ctx) {}
 
     virtual void process(KernelExecutionContext &ctx) = 0;
 };

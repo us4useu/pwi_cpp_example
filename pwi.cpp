@@ -11,8 +11,11 @@ TxRxSequence createPwiSequence(const PwiSequence &seq, const arrus::devices::Pro
     // Apertures
     auto nElements = probeModel.getNumberOfElements()[0];
     auto apertureSize = nElements;
-    std::vector<bool> rxAperture(apertureSize, true);
-    std::vector<bool> txAperture(apertureSize, true);
+    if(seq.getTxApertures().size() != seq.getRxApertures().size()
+    || seq.getTxApertures().size() != seq.getAngles().size()) {
+        throw std::runtime_error("There should be exactly the same number of tx, rx apertures and angles.");
+    }
+    auto nTxRxs = seq.getTxApertures().size();
 
     // Delays
     std::vector<float> delays(nElements, 0.0f);
@@ -20,14 +23,18 @@ TxRxSequence createPwiSequence(const PwiSequence &seq, const arrus::devices::Pro
 
     float pitch = probeModel.getPitch()[0];
 
-    for (auto angle: seq.getAngles()) {
-        std::vector<float> delays(nElements, 0.0f);
+    for (int i = 0; i < nTxRxs; ++i) {
+        auto &txAperture = seq.getTxApertures()[i];
+        auto &rxAperture = seq.getRxApertures()[i];
+        auto angle = seq.getAngles()[i];
 
+        std::vector<float> delays(nElements, 0.0f);
         // Compute array of TX delays.
         for (int i = 0; i < nElements; ++i) {
             delays[i] = pitch * i * sin(angle) / seq.getSpeedOfSound();
         }
         float minDelay = *std::min_element(std::begin(delays), std::end(delays));
+        // Equalize to 0
         for (int i = 0; i < nElements; ++i) {
             delays[i] -= minDelay;
         }

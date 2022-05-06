@@ -19,7 +19,7 @@ public:
             cv::Mat abs(nrows, ncols, CV_32F);
             cv::Mat logAbs(nrows, ncols, CV_32F);
             cv::Mat logAbsColor;
-            Mat out[] = {real, imag};
+            cv::Mat out[] = {real, imag};
             int from_to[] = {0,0 , 1,1};
             cv::mixChannels(&mat, 1, out, 2, from_to, 2);
             cv::Mat mag = real.mul(real) + imag.mul(imag);
@@ -30,7 +30,7 @@ public:
             ::cv::imshow("Display2D", mat);
         }
         // Refresh the window and check if user pressed 'q'.
-        int key = waitKey(1);
+        int key = cv::waitKey(1);
     }
 
     void exit() {

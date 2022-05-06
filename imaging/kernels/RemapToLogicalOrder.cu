@@ -1,13 +1,15 @@
 #ifndef CPP_EXAMPLE_KERNELS_REMAPTOLOGICALORDER_CUH
 #define CPP_EXAMPLE_KERNELS_REMAPTOLOGICALORDER_CUH
 
-#include "../CudaUtils.cuh"
-#include "../NdArray.h"
-#include "../KernelInitResult.h"
-#include "../KernelConstructionContext.h"
-#include "../Kernel.h"
+#include "imaging/kernels/RemapToLogicalOrder.h"
+#include "imaging/CudaUtils.cu"
+//#include "../NdArray.h"
+//#include "../KernelInitResult.h"
+//#include "../KernelConstructionContext.h"
+//#include "../Kernel.h"
 
 namespace imaging {
+
 __global__ void arrusRemap(short *out, const short *in,
                            const short *fcmFrames,
                            const char *fcmChannels,
@@ -33,46 +35,26 @@ __global__ void arrusRemap(short *out, const short *in,
     out[indexOut] = in[indexIn];
 }
 
-class RemapToLogicalOrder : public Kernel {
-public:
-    RemapToLogicalOrder(NdArray fcmChannels, NdArray fcmFrames, unsigned nSamples)
-            : fcmChannels(std::move(fcmChannels)),
-              fcmFrames(std::move(fcmFrames)),
-              nSamples(nSamples) {
-        nFrames = this->fcmFrames.getShape()[0];
-        nChannels = this->fcmFrames.getShape()[1];
-        fcmFramesPtr = this->fcmFrames.getPtr<short>();
-        fcmChannelsPtr = this->fcmChannels.getPtr<char>();
-    }
+void RemapToLogicalOrderFunctor::operator()() {
+            dim3 block(BLOCK_TILE_DIM, BLOCK_TILE_DIM);
+            // TODO
+            dim3 grid(32, 32, 1);
+//            dim3 grid((32 - 1) / block.x + 1,
+//                      (nSamples - 1) / block.y + 1,
+//                      nFrames);
+            arrusRemap<<<grid, block, 0>>>(
+                nullptr, nullptr,
+                nullptr, nullptr,
+                0, 0, 0
+//                output->getPtr<short>(), input->getConstPtr<short>(),
+//                fcmFramesPtr, fcmChannelsPtr,
+//                nFrames, nSamples, nChannels
+                );
+            CUDA_ASSERT(cudaGetLastError());
+}
 
-    KernelInitResult prepare(const KernelInitContext &ctx) override {
-        return KernelInitResult({nFrames, nSamples, nChannels},
-                                NdArray::DataType::INT16,
-                                ctx.getInputSamplingFrequency());
-    }
 
-    void process(NdArray *output, const NdArray *input,
-                 cudaStream_t &stream) override {
-        dim3 block(BLOCK_TILE_DIM, BLOCK_TILE_DIM);
-        dim3 grid((nChannels - 1) / block.x + 1,
-                  (nSamples - 1) / block.y + 1,
-                  nFrames);
-        arrusRemap<<<grid, block, 0, stream>>>(
-                output->getPtr<short>(), input->getConstPtr<short>(),
-                fcmFramesPtr, fcmChannelsPtr,
-                nFrames, nSamples, nChannels);
-        CUDA_ASSERT(cudaGetLastError());
-    }
 
-private:
-    static constexpr int BLOCK_TILE_DIM = 32;
-
-    // Output shape
-    unsigned nFrames, nSamples, nChannels;
-    NdArray fcmChannels, fcmFrames;
-    short *fcmFramesPtr;
-    char *fcmChannelsPtr;
-};
 }
 
 

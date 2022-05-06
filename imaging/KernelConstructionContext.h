@@ -1,49 +1,33 @@
 #ifndef CPP_EXAMPLE_KERNELS_KERNELINITCONTEXT_H
 #define CPP_EXAMPLE_KERNELS_KERNELINITCONTEXT_H
 
-// TODO inputSamplingFrequency -> all other context settings
-
 #include <utility>
 
 #include "NdArray.h"
+#include "imaging/Metadata.h"
 
 namespace imaging {
 class KernelConstructionContext {
 public:
-    KernelConstructionContext(NdArray::DataShape inputShape, NdArray::DataType inputDataType,
-                              float inputSamplingFrequency)
-        : inputShape(std::move(inputShape)), inputDataType(inputDataType),
-          inputSamplingFrequency(inputSamplingFrequency) {}
+    KernelConstructionContext(NdArrayDef input, NdArrayDef output, Metadata inputMetadata)
+        : input(std::move(input)), output(std::move(output)), inputMetadata(std::move(inputMetadata)) {
 
-    float getInputSamplingFrequency() const { return inputSamplingFrequency; }
-
-    const NdArray::DataShape &getInputShape() const { return inputShape; }
-
-    NdArray::DataType getDataType() const { return inputDataType; }
-
-    float getSamplingFrequency() const { return inputSamplingFrequency; }
-
-    const NdArray::DataShape &getOutputShape() const { return outputShape; }
-
-    void setOutputShape(const NdArray::DataShape &OutputShape) { outputShape = OutputShape; }
-
-    DataType getOutputDataType() const { return outputDataType; }
-
-    void setOutputDataType(DataType OutputDataType) { outputDataType = OutputDataType; }
-
-    float getOutputSamplingFrequency() const { return outputSamplingFrequency; }
-
-    void setOutputSamplingFrequency(float OutputSamplingFrequency) {
-        outputSamplingFrequency = OutputSamplingFrequency;
+        // Start with the input metadata.
+        outputMetadataBuilder = MetadataBuilder{inputMetadata};
     }
 
+    const NdArrayDef &getInput() const { return input; }
+
+    const NdArrayDef &getOutput() const { return output; }
+
+    void setOutput(const NdArrayDef &output) { KernelConstructionContext::output = output; }
+
+    MetadataBuilder &getOutputMetadataBuilder() { return outputMetadataBuilder; }
+
 private:
-    NdArray::DataShape inputShape;
-    NdArray::DataType inputDataType;
-    float inputSamplingFrequency;
-    NdArray::DataShape outputShape;
-    NdArray::DataType outputDataType;
-    float outputSamplingFrequency;
+    NdArrayDef input, output;
+    Metadata inputMetadata;
+    MetadataBuilder outputMetadataBuilder;
 };
 }// namespace imaging
 #endif//CPP_EXAMPLE_KERNELS_KERNELINITCONTEXT_H

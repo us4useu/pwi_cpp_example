@@ -1,8 +1,34 @@
-#ifndef PWI_CPP_EXAMPLE_IMAGING_KERNELS_REMAPTOLOGICALORDER_H
-#define PWI_CPP_EXAMPLE_IMAGING_KERNELS_REMAPTOLOGICALORDER_H
+#ifndef CPP_EXAMPLE_IMAGING_KERNELS_REMAPTOLOGICALORDER_H
+#define CPP_EXAMPLE_IMAGING_KERNELS_REMAPTOLOGICALORDER_H
 
-class RemapToLogicalOrderOpKernel: public K {
+#include "imaging/Kernel.h"
+#include "imaging/Operation.h"
+#include "imaging/ops/RemapToLogicalOrder.h"
 
+namespace imaging {
+
+class RemapToLogicalOrderFunctor {
+public:
+    static constexpr int BLOCK_TILE_DIM = 32;
+    void operator()();
 };
 
-#endif //PWI_CPP_EXAMPLE_IMAGING_KERNELS_REMAPTOLOGICALORDER_H
+class RemapToLogicalOrderKernel : public Kernel {
+public:
+    explicit RemapToLogicalOrderKernel(KernelConstructionContext &ctx);
+    void process(KernelExecutionContext &ctx) override;
+
+private:
+    // Output shape
+    //    unsigned nFrames, nSamples, nChannels;
+    //    NdArray fcmChannels, fcmFrames;
+    RemapToLogicalOrderFunctor impl;
+    short *fcmFramesPtr;
+    char *fcmChannelsPtr;
+};
+
+
+
+}// namespace imaging
+
+#endif//CPP_EXAMPLE_IMAGING_KERNELS_REMAPTOLOGICALORDER_H

@@ -11,7 +11,11 @@ namespace imaging {
 class RemapToLogicalOrderFunctor {
 public:
     static constexpr int BLOCK_TILE_DIM = 32;
-    void operator()();
+    void operator()(NdArray& output, const NdArray& input,
+                    const NdArray& fcmFrames, const NdArray& fcmChannels, const NdArray &fcmUs4oems,
+                    const NdArray& frameOffsets, const NdArray& nFramesUs4OEM,
+                    unsigned nSequences, unsigned nFrames, unsigned nSamples, unsigned nChannels,
+                    cudaStream_t stream);
 };
 
 class RemapToLogicalOrderKernel : public Kernel {
@@ -20,12 +24,14 @@ public:
     void process(KernelExecutionContext &ctx) override;
 
 private:
-    // Output shape
-    //    unsigned nFrames, nSamples, nChannels;
-    //    NdArray fcmChannels, fcmFrames;
+    NdArray fcmFrames;
+    NdArray fcmChannels;
+    NdArray fcmUs4oems;
+    NdArray frameOffsets;
+    NdArray nFramesUs4OEM;
+    // number of logical sequences, frames, ...
+    unsigned nSequences, nFrames, nSamples, nChannels;
     RemapToLogicalOrderFunctor impl;
-    short *fcmFramesPtr;
-    char *fcmChannelsPtr;
 };
 
 

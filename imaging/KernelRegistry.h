@@ -2,6 +2,7 @@
 #define CPP_EXAMPLE_IMAGING_KERNELREGISTRY_H
 
 #include <functional>
+#include <iostream>
 
 #include "imaging/Kernel.h"
 #include "imaging/Operation.h"
@@ -33,8 +34,14 @@ private:
 template<typename T> class RegisterKernelOpInitializer {
 public:
     explicit RegisterKernelOpInitializer(const Operation::OpClassId id) {
-        KernelRegistry::getInstance().registerKernelOpFactory(
-            id, [](KernelConstructionContext &ctx) { return std::make_unique<T>(ctx); });
+        try {
+            KernelRegistry::getInstance().registerKernelOpFactory(
+                id, [](KernelConstructionContext &ctx) { return std::make_unique<T>(ctx); });
+        } catch(const std::exception &e) {
+            std::cerr << "Error while registering op kernel: " << e.what() << std::endl;
+        } catch(...) {
+            std::cerr << "Unknown error while registering op kernel" << std::endl;
+        }
     }
 };
 

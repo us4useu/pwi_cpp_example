@@ -9,8 +9,8 @@ public:
         : input(input), output(output), stream(stream) {}
 
     const NdArray &getInput() const { return input; }
-    const NdArray &getOutput() const { return output; }
-    const cudaStream_t getStream() const { return stream; }
+    NdArray &getOutput() { return output; }
+    cudaStream_t getStream() { return stream; }
 
 private:
     // View

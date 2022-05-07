@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <utility>
 #include <vector>
+#include <limits>
 
 #include "CudaUtils.cu"
 #include "DataType.h"
@@ -35,13 +36,51 @@ public:
 
 #define ASSERT_NOT_GPU() assertNotGpu(__LINE__)
 
-    static NdArray asarray(const std::vector<float> &values) {
+    static NdArray asarray(const std::vector<double> &values, bool isGpu = false) {
+        NdArrayDef def{{(unsigned)values.size(), }, DataType::FLOAT64};
+        return NdArray::asarray(def, values, isGpu);
+    }
+
+    static NdArray asarray(const std::vector<float> &values, bool isGpu = false) {
         NdArrayDef def{{(unsigned)values.size(), }, DataType::FLOAT32};
-        NdArray result{def, false};
-        auto* data = (float*)result.ptr;
-        for(size_t i = 0; i < values.size(); ++i) {
-            data[i] = values[i];
-        }
+        return NdArray::asarray(def, values, isGpu);
+    }
+
+    static NdArray asarray(const std::vector<int8_t> &values, bool isGpu = false) {
+        NdArrayDef def{{(unsigned)values.size(), }, DataType::INT8};
+        return NdArray::asarray(def, values, isGpu);
+    }
+
+    static NdArray asarray(const std::vector<uint8_t> &values, bool isGpu = false) {
+        NdArrayDef def{{(unsigned)values.size(), }, DataType::UINT8};
+        return NdArray::asarray(def, values, isGpu);
+    }
+
+    static NdArray asarray(const std::vector<uint16_t> &values, bool isGpu = false) {
+        NdArrayDef def{{(unsigned)values.size(), }, DataType::UINT16};
+        return NdArray::asarray(def, values, isGpu);
+    }
+
+    static NdArray asarray(const std::vector<int16_t> &values, bool isGpu = false) {
+        NdArrayDef def{{(unsigned)values.size(), }, DataType::INT16};
+        return NdArray::asarray(def, values, isGpu);
+    }
+
+    static NdArray asarray(const std::vector<int32_t> &values, bool isGpu = false) {
+        NdArrayDef def{{(unsigned)values.size(), }, DataType::INT32};
+        return NdArray::asarray(def, values, isGpu);
+    }
+
+    static NdArray asarray(const std::vector<uint32_t> &values, bool isGpu = false) {
+        NdArrayDef def{{(unsigned)values.size(), }, DataType::UINT32};
+        return NdArray::asarray(def, values, isGpu);
+    }
+
+    template<typename T>
+    static NdArray asarray(NdArrayDef def, std::vector<T> values, bool isGpu = false) {
+        NdArray result{def, isGpu};
+        cudaMemcpyKind memcpyKind = isGpu ? cudaMemcpyHostToDevice : cudaMemcpyHostToHost;
+        NdArray::memcpy(result.ptr, (uint8_t*)values.data(), result.nBytes, memcpyKind);
         return result;
     }
 
@@ -391,11 +430,15 @@ public:
     }
 
     size_t getNumberOfElements() const {
-        size_t result = 1;
-        for (auto &val : shape) {
-            result *= val;
+        return getNumberOfElements(this->shape);
+    }
+
+    NdArray& reshape(const DataShape& newShape) {
+        if(getNumberOfElements() != getNumberOfElements(newShape)) {
+            throw std::runtime_error("NdArray: new shape incompatible with the size of array.");
         }
-        return result;
+        this->shape = newShape;
+        return *this;
     }
 
 private:
@@ -471,7 +514,19 @@ private:
 
     static void memcpy(uint8_t *dst, uint8_t* src, size_t size, bool gpu) {
         auto kind = gpu ? cudaMemcpyDeviceToDevice : cudaMemcpyHostToHost;
+        NdArray::memcpy(dst, src, size, kind);
+    }
+
+    static void memcpy(uint8_t *dst, uint8_t* src, size_t size, enum cudaMemcpyKind kind) {
         CUDA_ASSERT(cudaMemcpy(dst, src, size, kind));
+    }
+
+    static size_t getNumberOfElements(const DataShape &shape) {
+        size_t result = 1;
+        for (auto &val : shape) {
+            result *= val;
+        }
+        return result;
     }
 
     void assertNotGpu(int line) const {

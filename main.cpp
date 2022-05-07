@@ -72,7 +72,7 @@ int main() noexcept {
         auto fullArray = us4r->getProbe(0)->getModel();
         ProbeModelExt columnArray{0, fullArray, 0, 128, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OX};
         ProbeModelExt rowArray{1, fullArray, 128, 256, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OY};
-        std::vector<ProbeModelExt> models = {columnArray, rowArray};
+        std::vector<ProbeModelExt> arrayModels = {columnArray, rowArray};
 
         std::vector<PwiSequence::Aperture> txApertures {
             rowArray.getFullAperture(),
@@ -105,7 +105,7 @@ int main() noexcept {
             {0, 2048},// sample range (start sample, end sample)
         };
 
-        auto result = upload(session.get(), seq);
+        auto result = upload(session.get(), seq, arrayModels);
         // Get upload results:
         // - RF buffer, which will be filled by Us4OEMS after the session is started.
         auto buffer = std::static_pointer_cast<DataBuffer>(std::get<0>(result));

@@ -20,7 +20,7 @@ public:
 
     const NdArrayDef &getOutput() const { return output; }
 
-    void setOutput(const NdArrayDef &output) { KernelConstructionContext::output = output; }
+    void setOutput(const NdArrayDef &value) {this->output = value; }
 
     const std::shared_ptr<Metadata> &getInputMetadata() const { return inputMetadata; }
 

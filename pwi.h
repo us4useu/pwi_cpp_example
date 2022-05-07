@@ -5,12 +5,14 @@
 #include <vector>
 
 #include "arrus/core/api/arrus.h"
+#include "imaging/ProbeModelExt.h"
+#include "imaging/Metadata.h"
 
 class PwiSequence {
 public:
-    using ChannelsMask = std::vector<bool>;
+    using Aperture = imaging::ProbeModelExt::Aperture;
 
-    PwiSequence(std::vector<ChannelsMask> txApertures, std::vector<ChannelsMask> rxApertures, std::vector<float> angles,
+    PwiSequence(std::vector<Aperture> txApertures, std::vector<Aperture> rxApertures, std::vector<float> angles,
                 const arrus::ops::us4r::Pulse &pulse, float speedOfSound, float pri, const std::optional<float> &sri,
                 std::pair<::arrus::uint32, arrus::uint32> sampleRange, unsigned int downsamplingFactor = 1)
         : txApertures(std::move(txApertures)), rxApertures(std::move(rxApertures)), angles(std::move(angles)),
@@ -24,12 +26,12 @@ public:
     const std::optional<float> &getSri() const { return sri; }
     const std::pair<::arrus::uint32, arrus::uint32> &getSampleRange() const { return sampleRange; }
     unsigned int getDownsamplingFactor() const { return downsamplingFactor; }
-    const std::vector<ChannelsMask> &getTxApertures() const { return txApertures; }
-    const std::vector<ChannelsMask> &getRxApertures() const { return rxApertures; }
+    const std::vector<Aperture> &getTxApertures() const { return txApertures; }
+    const std::vector<Aperture> &getRxApertures() const { return rxApertures; }
 
 private:
-    std::vector<ChannelsMask> txApertures;
-    std::vector<ChannelsMask> rxApertures;
+    std::vector<Aperture> txApertures;
+    std::vector<Aperture> rxApertures;
     std::vector<float> angles;
     ::arrus::ops::us4r::Pulse pulse{6e6, 2, false};
     float speedOfSound{1540};
@@ -42,6 +44,7 @@ private:
 /**
  * Uploads a given PWI sequence on the devices in the session.
  */
-::arrus::session::UploadResult upload(::arrus::session::Session *session, const PwiSequence &seq);
+std::tuple<std::shared_ptr<::arrus::framework::Buffer>, imaging::NdArrayDef, std::shared_ptr<::imaging::Metadata>>
+upload(::arrus::session::Session *session, const PwiSequence &seq);
 
 #endif//CPP_EXAMPLE_PWI_SEQUENCE_H

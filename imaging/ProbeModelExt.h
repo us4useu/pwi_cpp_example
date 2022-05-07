@@ -1,0 +1,122 @@
+#ifndef CPP_EXAMPLE_IMAGING_PROBEMODELEXT_H
+#define CPP_EXAMPLE_IMAGING_PROBEMODELEXT_H
+
+#include <arrus/core/api/arrus.h>
+
+#include "imaging/NdArray.h"
+#include <utility>
+
+namespace imaging {
+/**
+ * An adapter to arrus::devices::ProbeModel class. Note: the functions available in this
+ * class will be moved in some time to the arrus::devices::ProbeModelExt implementation.
+ *
+ * Note: only 1D arrus probes are supported here.
+ *
+ * The center of coordinate system is located in the center of probe.
+ *
+ * @param curvatureRadius: probe's curvature radius, inf means a flat probe
+ * @param axis: axis along which probe elements are located.
+ */
+class ProbeModelExt {
+public:
+    class Aperture {
+    public:
+        using ChannelsMask = std::vector<bool>;
+        Aperture(uint16_t ordinal, const ChannelsMask &mask) : ordinal(ordinal), mask(mask) {}
+        uint16_t getOrdinal() const { return ordinal; }
+        const ChannelsMask &getMask() const { return mask; }
+
+    private:
+        uint16_t ordinal;
+        ChannelsMask mask;
+    };
+
+    enum class Axis { OX, OY };
+
+    ProbeModelExt(uint16_t ordinal, arrus::devices::ProbeModel arrusProbe, uint16_t startChannel, uint16_t stopChannel,
+                  float curvatureRadius = std::numeric_limits<float>::infinity(), Axis axis = Axis::OX)
+        : ordinal(ordinal), arrusProbe(std::move(arrusProbe)), startChannel(startChannel), stopChannel(stopChannel),
+          curvatureRadius(curvatureRadius), axis(axis) {
+        // Note: only 1D array is supported here
+        auto nElements = arrusProbe.getNumberOfElements()[0];
+        float pitch = (float)(arrusProbe.getPitch()[0]);
+
+        NdArray elementPosition = NdArray::arange(-((float)nElements-1)/2.0f, ((float)nElements/2.0f))*pitch;
+        if(curvatureRadius == std::numeric_limits<float>::infinity()) {
+            // Flat array.
+            setLateralPosition(elementPosition);
+            this->z = NdArray::zeros(nElements);
+            this->angle = NdArray::zeros(nElements);
+        }
+        else {
+            this->angle = elementPosition/curvatureRadius;
+            setLateralPosition(this->angle.sin()*curvatureRadius);
+            this->z = this->angle.cos()*curvatureRadius;
+            this->z = this->z-this->z.min<float>();
+        }
+    }
+
+    /**
+     * Returns position of the center of probe OX
+     */
+    const NdArray &getElementPositionX() const { return x; }
+
+    /**
+     * Returns position of the center of probe OY
+     */
+    const NdArray &getElementPositionY() const { return y; }
+
+    /**
+     * Return the position of the center of probe OZ
+     */
+    const NdArray &getElementPositionZ() const { return z; }
+
+    const NdArray &getElementAngle() const {return angle; }
+
+    /**
+     * Returns the mask of all the channels assigned to the given probe.
+     */
+    Aperture getFullAperture() const { return Aperture(ordinal, fullAperture); }
+
+    float getCurvatureRadius() const { return curvatureRadius; }
+
+    /**
+     * @return true if probe elements are located on OX axis (i.e. OY coordinate is always 0), false otherwise
+     */
+    bool isOX() const {
+        return axis == Axis::OX;
+    }
+
+    /**
+     * @return true if probe elements are located on OY axis (i.e. OX coordinate is always 0), false otherwise
+     */
+    bool isOY() const {
+        return axis == Axis::OY;
+    }
+
+private:
+
+    void setLateralPosition(const NdArray& position) {
+        if(this->axis == Axis::OX) {
+            this->x = position;
+            this->y = NdArray::zeros(position.getNumberOfElements());
+        }
+        else {
+            this->y = position;
+            this->x = NdArray::zeros(position.getNumberOfElements());
+        }
+    }
+
+
+    uint16_t ordinal;
+    arrus::devices::ProbeModel arrusProbe;
+    uint16_t startChannel, stopChannel;
+    std::vector<bool> fullAperture;
+    NdArray x, y, z, angle;
+    float curvatureRadius;
+    Axis axis;
+};
+}// namespace imaging
+
+#endif//CPP_EXAMPLE_IMAGING_PROBEMODELEXT_H

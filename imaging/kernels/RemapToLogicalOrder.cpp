@@ -30,6 +30,8 @@ void RemapToLogicalOrderKernel::process(KernelExecutionContext &ctx) {
     impl();
 }
 
+REGISTER_KERNEL_OP(OPERATION_CLASS_ID(RemapToLogicalOrder), RemapToLogicalOrderKernel);
+
 //REGISTER_KERNEL(OPERATION_CLASS_ID(RemapToLogicalOrder), RemapToLogicalOrderKernel)
 
 }// namespace imaging

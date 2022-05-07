@@ -1,61 +1,107 @@
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 
+#include "imaging/Metadata.h"
+#include "imaging/ProbeModelExt.h"
 #include "pwi.h"
 
 using namespace ::arrus::session;
 using namespace ::arrus::ops::us4r;
 using namespace ::arrus::framework;
 
-TxRxSequence createPwiSequence(const PwiSequence &seq, const arrus::devices::ProbeModel &probeModel) {
+/**
+ * Note: this function works only with full TX/RX apertures.
+ */
+TxRxSequence createPwiSequence(const PwiSequence &seq, const std::vector<::imaging::ProbeModelExt> &probes) {
     // Apertures
-    auto nElements = probeModel.getNumberOfElements()[0];
-    auto apertureSize = nElements;
-    if(seq.getTxApertures().size() != seq.getRxApertures().size()
-    || seq.getTxApertures().size() != seq.getAngles().size()) {
+    if (seq.getTxApertures().size() != seq.getRxApertures().size()
+        || seq.getTxApertures().size() != seq.getAngles().size()) {
         throw std::runtime_error("There should be exactly the same number of tx, rx apertures and angles.");
     }
     auto nTxRxs = seq.getTxApertures().size();
-
     // Delays
-    std::vector<float> delays(nElements, 0.0f);
-    std::vector<TxRx> txrxs;
+    std::vector<float> centerDelays(nTxRxs);
+    std::vector<::imaging::NdArray> delays(nTxRxs);
 
-    float pitch = probeModel.getPitch()[0];
+    float txCenterLateral = 0.0f;// Note: currently only a full TX aperture centered on lateral position is supported
 
     for (int i = 0; i < nTxRxs; ++i) {
         auto &txAperture = seq.getTxApertures()[i];
         auto &rxAperture = seq.getRxApertures()[i];
         auto angle = seq.getAngles()[i];
 
-        std::vector<float> delays(nElements, 0.0f);
-        // Compute array of TX delays.
-        for (int i = 0; i < nElements; ++i) {
-            delays[i] = pitch * i * sin(angle) / seq.getSpeedOfSound();
+        auto &txProbe = probes[txAperture.getOrdinal()];
+        const ::imaging::NdArray &positionLateral =
+            txProbe.isOX() ? txProbe.getElementPositionX() : txProbe.getElementPositionY();
+        const ::imaging::NdArray &positionAxial = txProbe.getElementPositionZ();
+
+        ::imaging::NdArray d =
+            (positionLateral * std::sin(angle) + positionAxial * std::cos(angle)) / seq.getSpeedOfSound();
+        d = d - d.max<float>();
+        delays[i] = d;
+        auto nElements = d.getNumberOfElements();
+        if (nElements % 2 == 0) {
+            // Even number of elements in aperture: return average delay of the two center elements.
+            centerDelays[i] = (d.get<float>(nElements / 2) + d.get<float>(nElements / 2 + 1)) / 2;
+        } else {
+            // Odd number of elements in aperture: return delay of the central element.
+            centerDelays[i] = d.get<float>(nElements / 2);
         }
-        float minDelay = *std::min_element(std::begin(delays), std::end(delays));
-        // Equalize to 0
-        for (int i = 0; i < nElements; ++i) {
-            delays[i] -= minDelay;
-        }
-        txrxs.emplace_back(
-            Tx(txAperture, delays, seq.getPulse()),
-            Rx(rxAperture, seq.getSampleRange(), seq.getDownsamplingFactor()),
-            seq.getPri());
+    }
+    // Equalize the delay of the center of aperture.
+    // The common delay applied for center of each TX aperture
+    // So we can use a single TX center delay on image reconstruction step.
+    // The center of transmit will be in the same position for all TX/RXs.
+    float maxCenterDelay = *std::max(std::begin(centerDelays), std::end(centerDelays));
+
+    for(int i = 0; i < nTxRxs; ++i) {
+        delays[i] = delays[i]-(centerDelays[i]+maxCenterDelay);
+    }
+
+    std::vector<TxRx> txrxs;
+    for (int i = 0; i < nTxRxs; ++i) {
+        auto &txAperture = seq.getTxApertures()[i];
+        auto &rxAperture = seq.getRxApertures()[i];
+        auto &d = delays[i];
+        txrxs.emplace_back(Tx(txAperture.getMask(), d.toVector<float>(), seq.getPulse()),
+                           Rx(rxAperture.getMask(), seq.getSampleRange(), seq.getDownsamplingFactor()), seq.getPri());
     }
     float sri = seq.getSri().has_value() ? seq.getSri().value() : TxRxSequence::NO_SRI;
     return TxRxSequence{txrxs, {}, sri};
 }
 
+/**
+ * Uploads given TX/RX sequence on device.
+ *
+ * @param session session on which the sequence should be uploaded
+ * @param seq sequence to upload
+ * @param probes list of probe definitions used in this session, note:
+ * @return a tuple: (output data buffer, output dimensions, output metadata)
+ */
+std::tuple<std::shared_ptr<::arrus::framework::Buffer>, imaging::NdArrayDef, std::shared_ptr<::imaging::Metadata>>
+upload(Session *session, const PwiSequence &seq, const std::vector<::imaging::ProbeModelExt> &probes) {
+    auto *us4r = (::arrus::devices::Us4R *) session->getDevice("/Us4R:0");
 
-UploadResult upload(Session *session, const PwiSequence &seq) {
-    auto *us4r =  (::arrus::devices::Us4R *) session->getDevice("/Us4R:0");
-    auto probeModel = us4r->getProbe(0)->getModel();
-
-    auto txRxSequence = createPwiSequence(seq, probeModel);
+    auto txRxSequence = createPwiSequence(seq, probes);
 
     DataBufferSpec outputBuffer{DataBufferSpec::Type::FIFO, 4};
     Scheme scheme{txRxSequence, 2, outputBuffer, Scheme::WorkMode::HOST};
-    return session->upload(scheme);
-}
+    auto result = session->upload(scheme);
 
+    imaging::MetadataBuilder metadataBuilder;
+    metadataBuilder.addObject(
+        "frameChannelMapping",
+        result.getConstMetadata()->get<::arrus::devices::FrameChannelMapping>("frameChannelMapping"));
+    metadataBuilder.setValue("samplingFrequency", us4r->getSamplingFrequency() / seq.getDownsamplingFactor());
+    metadataBuilder.addObject("sequence", std::make_shared<PwiSequence>(seq));
+    metadataBuilder.addObject("rawSequence", std::make_shared<TxRxSequence>(txRxSequence));
+
+    // Determine output size.
+    auto buffer = std::static_pointer_cast<DataBuffer>(result.getBuffer());
+    if (buffer->getNumberOfElements() == 0) {
+        throw std::runtime_error("The output buffer should have at least one element.");
+    }
+    auto outputShape = buffer->getElement(0)->getData().getShape().getValues();
+    ::imaging::NdArrayDef outputDef{outputShape, imaging::DataType::INT16};
+    return {result.getBuffer(), outputDef, metadataBuilder.buildSharedPtr()};
+}

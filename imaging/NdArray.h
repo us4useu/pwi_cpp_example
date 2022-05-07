@@ -15,6 +15,7 @@ typedef std::vector<unsigned> DataShape;
 typedef DataType DataType;
 
 
+
 class NdArrayDef {
 public:
     NdArrayDef() = default;
@@ -31,6 +32,42 @@ private:
 
 class NdArray {
 public:
+
+#define ASSERT_NOT_GPU() assertNotGpu(__LINE__)
+
+    static NdArray asarray(const std::vector<float> &values) {
+        NdArrayDef def{{(unsigned)values.size(), }, DataType::FLOAT32};
+        NdArray result{def, false};
+        auto* data = (float*)result.ptr;
+        for(size_t i = 0; i < values.size(); ++i) {
+            data[i] = values[i];
+        }
+        return result;
+    }
+
+    static NdArray zeros(size_t nElements) {
+        std::vector<float> values(nElements, 0);
+        return asarray(values);
+    }
+
+    /**
+     * Generates a list of values from range [start, stop), with given step value.
+     */
+    static NdArray arange(float start, float stop, float step = 1.0f) {
+        std::vector<float> values;
+        if(start >= stop) {
+            throw std::runtime_error("NdArray: Start value should be less than stop value: "
+                                     + std::to_string(start) + ", "
+                                     + std::to_string(stop));
+        }
+        float current = start;
+        while(current < stop) {
+            values.push_back(current);
+            current += step;
+        }
+        return asarray(values);
+    }
+
     NdArray() = default;
 
     NdArray(const NdArrayDef &definition, bool isGpu)
@@ -40,12 +77,9 @@ public:
             return;
         }
         nBytes = calculateSize(shape, dataType);
-        if (isGpu) {
-            CUDA_ASSERT(cudaMalloc(&ptr, nBytes));
-        } else {
-            CUDA_ASSERT(cudaMallocHost(&ptr, nBytes));
-        }
+        allocateMemory(&(this->ptr), nBytes, isGpu);
     }
+
 
     NdArray(void *ptr, const NdArrayDef& definition, bool isGpu)
         : ptr((uint8_t *) ptr), shape(definition.getShape()), dataType(definition.getType()), isGpu(isGpu) {
@@ -79,11 +113,36 @@ public:
     }
 
     NdArray(const NdArray &array) {
-        // TODO implement
+        shape = array.shape;
+        dataType = array.dataType;
+        nBytes = array.nBytes;
+        isGpu = array.isGpu;
+        isExternal = array.isExternal;
+        if(! isExternal) {
+            allocateMemory(&(this->ptr), nBytes, isGpu);
+            NdArray::memcpy(this->ptr, array.ptr, nBytes, isGpu);
+        }
+        else {
+            ptr = array.ptr;
+        }
     }
 
-    NdArray &operator=(const NdArray &input) {
-        // TODO
+    NdArray &operator=(const NdArray &array) {
+        if (this != &array) {
+            freeMemory();
+            shape = array.shape;
+            dataType = array.dataType;
+            nBytes = array.nBytes;
+            isGpu = array.isGpu;
+            isExternal = array.isExternal;
+            if(! isExternal) {
+                allocateMemory(&(this->ptr), nBytes, isGpu);
+                NdArray::memcpy(this->ptr, array.ptr, nBytes, isGpu);
+            }
+            else {
+                ptr = array.ptr;
+            }
+        }
         return *this;
     }
 
@@ -96,6 +155,8 @@ public:
     const std::vector<unsigned> &getShape() const { return shape; }
 
     DataType getDataType() const { return dataType; }
+
+    NdArrayDef getDef() const { return NdArrayDef{shape, dataType};}
 
     size_t getNBytes() const { return nBytes; }
 
@@ -124,8 +185,221 @@ public:
         return isExternal;
     }
 
+    /**
+     * Element-wise multiplication by scalar value.
+     *
+     * @param value value by which this array should multiplied.
+     * @return the result array (currently: new array with data type float32)
+     */
+    NdArray operator*(const float value) const {
+        ASSERT_NOT_GPU();
+        NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
+        NdArray result{resultDef, this->isGpu}; // New, complete array.
+        auto nElements = result.getNumberOfElements();
+        auto* outputContainer = (float*)result.ptr;
+
+        for(size_t i = 0; i < nElements; ++i) {
+            outputContainer[i] = get<float>(i) * value;
+        }
+        return result;
+    }
+
+    /**
+     * Element-wise division by scalar value.
+     *
+     * @param value value by which this array should multiplied.
+     * @return the result array (currently: new array with data type float32)
+     */
+    NdArray operator/(const float value) const {
+        ASSERT_NOT_GPU();
+        NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
+        NdArray result{resultDef, this->isGpu}; // New, complete array.
+        auto nElements = result.getNumberOfElements();
+        auto* outputContainer = (float*)result.ptr;
+
+        for(size_t i = 0; i < nElements; ++i) {
+            outputContainer[i] = get<float>(i) / value;
+        }
+        return result;
+    }
+
+    /**
+     * Element-wise addition.
+     *
+     * Note: currently, the output Array will have float32 data type,
+     * regardless of input data type.
+     *
+     * @return the result array (currently: new array with data type float32)
+     */
+    NdArray operator+(const NdArray& other) const {
+        ASSERT_NOT_GPU();
+        auto nElements = this->getNumberOfElements();
+        if(nElements != other.getNumberOfElements()) {
+            throw std::runtime_error("Both NdArray should have the same size while adding them together");
+        }
+        NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
+        NdArray result{resultDef, this->isGpu}; // New, complete array.
+        auto* outputContainer = (float*)result.ptr;
+
+        for(size_t i = 0; i < nElements; ++i) {
+            outputContainer[i] = this->get<float>(i) * other.get<float>(i);
+        }
+        return result;
+    }
+
+    /**
+     * Element-wise negative value.
+     *
+     * Note: currently, the output Array will have float32 data type,
+     * regardless of input data type.
+     *
+     * @return the result array (currently: new array with data type float32)
+     */
+    NdArray operator-() const {
+        ASSERT_NOT_GPU();
+        NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
+        NdArray result{resultDef, this->isGpu};
+        auto* outputContainer = (float*)result.ptr;
+        auto nElements = this->getNumberOfElements();
+
+        for(size_t i = 0; i < nElements; ++i) {
+            outputContainer[i] = -this->get<float>(i);
+        }
+        return result;
+    }
+
+    /**
+     * Compute sine of each element this array.
+     *
+     * Note: currently, the output Array will have float32 data type,
+     * regardless of input data type.
+     *
+     * @return the result array (currently: new array with data type float32)
+     */
+    NdArray sin() const {
+        ASSERT_NOT_GPU();
+        NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
+        NdArray result{resultDef, this->isGpu};
+        auto* outputContainer = (float*)result.ptr;
+        auto nElements = this->getNumberOfElements();
+
+        for(size_t i = 0; i < nElements; ++i) {
+            outputContainer[i] = std::sin(this->get<float>(i));
+        }
+        return result;
+    }
+
+    /**
+     * Compute cosine of each element this array.
+     *
+     * Note: currently, the output Array will have float32 data type,
+     * regardless of input data type.
+     *
+     * @return the result array (currently: new array with data type float32)
+     */
+    NdArray cos() const {
+        ASSERT_NOT_GPU();
+        NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
+        NdArray result{resultDef, this->isGpu};
+        auto* outputContainer = (float*)result.ptr;
+        auto nElements = this->getNumberOfElements();
+
+        for(size_t i = 0; i < nElements; ++i) {
+            outputContainer[i] = std::cos(this->get<float>(i));
+        }
+        return result;
+    }
+
+    /**
+     * Element-wise subtraction.
+     *
+     * Note: currently, the output Array will have float32 data type,
+     * regardless of input data type.
+     *
+     * @return the result array (currently: new array with data type float32)
+     */
+    NdArray operator-(const NdArray& other) const {
+        return *this + (-other);
+    }
+
+    /**
+     * Element-wise subtraction.
+     *
+     * Note: currently, the output Array will have float32 data type,
+     * regardless of input data type.
+     *
+     * @return the result array (currently: new array with data type float32)
+     */
+    NdArray operator-(const float value) const {
+        ASSERT_NOT_GPU();
+        NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
+        NdArray result{resultDef, this->isGpu};
+        auto* outputContainer = (float*)result.ptr;
+        auto nElements = this->getNumberOfElements();
+
+        for(size_t i = 0; i < nElements; ++i) {
+            outputContainer[i] = this->get<float>(i)-value;
+        }
+        return result;
+    }
+
+    template<typename T>
+    T get(size_t i) const {
+        ASSERT_NOT_GPU();
+        auto nElements = getNumberOfElements();
+        if(i >= nElements) {
+            throw std::runtime_error("Index " + std::to_string(i) +
+                                     " out of array bounds (max: " + std::to_string(nElements) + ")");
+        }
+        uint8_t* position = ptr+(i* getSizeofDataType(this->dataType));
+        return this->castToType<T>(position);
+    }
+
+    template<typename T>
+    T max() {
+        T currentMax = std::numeric_limits<T>::min();
+        for(size_t i = 0; i < getNumberOfElements(); ++i) {
+            T value = this->get<T>(i);
+            if(currentMax < value) {
+                currentMax = value;
+            }
+        }
+        return currentMax;
+    }
+
+    template<typename T>
+    T min() {
+        T currentMin = std::numeric_limits<T>::max();
+        for(size_t i = 0; i < getNumberOfElements(); ++i) {
+            T value = this->get<float>(i);
+            if(currentMin > value) {
+                currentMin = value;
+            }
+        }
+        return currentMin;
+    }
+
+    template<typename T>
+    std::vector<T> toVector() {
+        auto* data = (T*)this->ptr;
+        auto nElements = getNumberOfElements();
+        std::vector<T> result(nElements);
+        for(size_t i = 0; i < nElements; ++i) {
+            result.push_back(get<T>(i));
+        }
+        return result;
+    }
+
+    size_t getNumberOfElements() const {
+        size_t result = 1;
+        for (auto &val : shape) {
+            result *= val;
+        }
+        return result;
+    }
+
 private:
-    static size_t getSizeofDataType(DataType type) {
+    static size_t getSizeofDataType(DataType type){
         if (type == DataType::UINT8) {
             return sizeof(unsigned char);
         } else if (type == DataType::INT8) {
@@ -150,12 +424,62 @@ private:
         throw std::runtime_error("Unhandled data type");
     }
 
+    template<typename T>
+    T castToType(const uint8_t* data) const {
+        switch(dataType) {
+        case DataType::UINT8:
+            return castSrcTypeToDstType<T, unsigned char>(data);
+        case DataType::INT8:
+            return castSrcTypeToDstType<T, char>(data);
+        case DataType::UINT16:
+            return castSrcTypeToDstType<T, unsigned short>(data);
+        case DataType::INT16:
+            return castSrcTypeToDstType<T, short>(data);
+        case DataType::UINT32:
+            return castSrcTypeToDstType<T, unsigned int>(data);
+        case DataType::INT32:
+            return castSrcTypeToDstType<T, int>(data);
+        case DataType::FLOAT32:
+            return castSrcTypeToDstType<T, float>(data);
+        case DataType::FLOAT64:
+            return castSrcTypeToDstType<T, double>(data);
+        default:
+            throw std::runtime_error("Cast to type: unhandled data type");
+        }
+    }
+
+    template<typename Dst, typename Src>
+    Dst castSrcTypeToDstType(const uint8_t* data) const {
+        return (Dst)(*(Src*)data);
+    }
+
     static size_t calculateSize(const DataShape &shape, DataType type) {
         size_t result = 1;
         for (auto &val : shape) {
             result *= val;
         }
         return result * getSizeofDataType(type);
+    }
+
+    static void allocateMemory(uint8_t** dst, size_t size, bool gpu) {
+        if (gpu) {
+            CUDA_ASSERT(cudaMalloc(dst, size));
+        } else {
+            CUDA_ASSERT(cudaMallocHost(dst, size));
+        }
+    }
+
+    static void memcpy(uint8_t *dst, uint8_t* src, size_t size, bool gpu) {
+        auto kind = gpu ? cudaMemcpyDeviceToDevice : cudaMemcpyHostToHost;
+        CUDA_ASSERT(cudaMemcpy(dst, src, size, kind));
+    }
+
+    void assertNotGpu(int line) const {
+        if(isGpu) {
+            throw std::runtime_error(
+                "NdArray, line " + std::to_string(line) + ":" +
+                "Operation is not supported for GPU arrays.");
+        }
     }
 
     uint8_t *ptr{nullptr};

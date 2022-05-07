@@ -50,6 +50,8 @@ public:
     MetadataBuilder() = default;
 
     explicit MetadataBuilder(const Metadata &metadata) : ptrs(metadata.ptrs), values(metadata.values) {}
+    explicit MetadataBuilder(const std::shared_ptr<Metadata> &metadata)
+        : ptrs(metadata->ptrs), values(metadata->values) {}
 
     template<typename T> std::shared_ptr<T> getObject(const std::string &key) {
         try {
@@ -67,13 +69,11 @@ public:
         ptrs.insert({key, std::static_pointer_cast<void>(ptr)});
     }
 
-    void setValue(const std::string &key, float value) {
-        values.insert({key, value});
-    }
+    void setValue(const std::string &key, float value) { values.insert({key, value}); }
 
-    Metadata build() {
-        return Metadata(ptrs, values);
-    }
+    Metadata build() { return Metadata(ptrs, values); }
+
+    std::shared_ptr<Metadata> buildSharedPtr() { return std::make_shared<Metadata>(ptrs, values); }
 
 private:
     std::unordered_map<std::string, std::shared_ptr<void>> ptrs;

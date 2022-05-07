@@ -4,6 +4,7 @@
 #include "imaging/Kernel.h"
 #include "imaging/Operation.h"
 #include "imaging/ops/RemapToLogicalOrder.h"
+#include "imaging/KernelRegistry.h"
 
 namespace imaging {
 

@@ -1,6 +1,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <utility>
 
 #include "Metadata.h"
 #include "NdArray.h"
@@ -10,20 +11,9 @@
 
 namespace imaging {
 
-PipelineRunner::PipelineRunner(std::shared_ptr<::arrus::framework::Buffer> inputBuffer, const PwiSequence &pwiSequence,
-                               std::shared_ptr<::arrus::session::UploadConstMetadata> metadata,
-                               Pipeline pipeline)
-    : inputBuffer(std::move(inputBuffer)), metadata(std::move(metadata)), pipeline(std::move(pipeline)) {
-    // Determine input shape and input data type based on
-    if (inputBuffer->getNumberOfElements() == 0) {
-        throw std::runtime_error("The input buffer cannot be empty");
-    }
-    auto element = inputBuffer->getElement(0);
-    auto inputShape = element->getData().getShape();
-    // FIXME int16 specific
-    inputDef = NdArrayDef{inputShape.getValues(), DataType::INT16};
+PipelineRunner::PipelineRunner(NdArrayDef inputDef, std::shared_ptr<Metadata> metadata, Pipeline pipeline)
+    : inputDef(std::move(inputDef)), inputMetadata(std::move(metadata)), pipeline(std::move(pipeline)) {
     inputGpu = NdArray{inputDef, true};
-    inputMetadata = convertToImagingMetadata(metadata, pwiSequence);
     CUDA_ASSERT(cudaStreamCreate(&processingStream));
     prepare();
 }
@@ -34,7 +24,7 @@ void PipelineRunner::prepare() {
 
     KernelRegistry registry;
     NdArrayDef currentInputDef = inputDef;
-    Metadata currentMetadata = inputMetadata;
+    std::shared_ptr<Metadata> currentMetadata = inputMetadata;
     NdArray currentInputArray = inputGpu.createView();
 
 
@@ -49,7 +39,7 @@ void PipelineRunner::prepare() {
         auto &outputArray = kernelOutputs[kernelOutputs.size()-1];
         kernelExecutionCtx.emplace_back(currentInputArray, outputArray.createView(), processingStream);
         currentInputDef = constructionContext.getOutput();
-        currentMetadata = constructionContext.getOutputMetadataBuilder().build();
+        currentMetadata = constructionContext.getOutputMetadataBuilder().buildSharedPtr();
         currentInputArray = outputArray.createView();
     }
     this->outputDef = currentInputDef;
@@ -91,15 +81,5 @@ void PipelineRunner::process(const ::arrus::framework::BufferElement::SharedHand
     //        so I had to use cudaStreamSynchronize here.
     //    CUDA_ASSERT(cudaLaunchHostFunc(processingStream, processingCallback, outputHost.getPtr<void>()));
 }
-
-Metadata
-PipelineRunner::convertToImagingMetadata(const std::shared_ptr<::arrus::session::UploadConstMetadata> &metadata,
-                                         const PwiSequence &sequence) {
-    MetadataBuilder builder;
-    builder.addObject("frameChannelMapping",
-                      metadata->get<::arrus::devices::FrameChannelMapping>("frameChannelMapping"));
-    builder.addObject("sequence", std::make_shared<PwiSequence>(sequence));
-    return builder.build();
-}
-
+const NdArrayDef &PipelineRunner::getOutputDef() const { return outputDef; }
 }// namespace imaging

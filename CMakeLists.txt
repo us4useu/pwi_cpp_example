@@ -53,6 +53,7 @@ set(MAIN_SRC
 
     imaging/NdArray.h
     imaging/DataType.h
+    imaging/ProbeModelExt.h
 
     imaging/Operation.h
     imaging/Kernel.h

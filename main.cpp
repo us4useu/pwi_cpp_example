@@ -13,6 +13,7 @@
 #include "imaging/PipelineRunner.h"
 #include "imaging/ops/Pipeline.h"
 #include "imaging/ops/RemapToLogicalOrder.h"
+#include "imaging/ProbeModelExt.h"
 #include "gui.h"
 #include "menu.h"
 #include "pwi.h"
@@ -43,6 +44,15 @@ const std::vector<float> BANDPASS_FILTER_COEFFS
 // Low-pass CIC filter cooefficients.
 const std::vector<float> LOWPASS_FILTER_COEFFS{1, 2, 3, 4, 3, 2, 1};
 
+void initializeDisplay(const std::vector<unsigned int> &inputShape, imaging::DataType type) {
+    if(inputShape.size() < 2) {
+        throw std::runtime_error("PipelineRunner's output shape should have at least 2 dimensions.");
+    }
+    mainDisplay.setNrows(inputShape[inputShape.size()-2]);
+    mainDisplay.setNcols(inputShape[inputShape.size()-1]);
+    mainDisplay.setInputDataType(type);
+
+}
 
 int main() noexcept {
     try {
@@ -59,36 +69,25 @@ int main() noexcept {
         auto session = ::arrus::session::createSession("C:/Users/Public/us4r.prototxt");
         auto us4r = (::arrus::devices::Us4R *) session->getDevice("/Us4R:0");
 
-        // Creating TX/RX sequence to be executed by the device.
-        constexpr unsigned N_ANGLES = 4;
+        auto fullArray = us4r->getProbe(0)->getModel();
+        ProbeModelExt columnArray{0, fullArray, 0, 128, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OX};
+        ProbeModelExt rowArray{1, fullArray, 128, 256, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OY};
+        std::vector<ProbeModelExt> models = {columnArray, rowArray};
 
-        auto probeModel = us4r->getProbe(0)->getModel();
-        auto nChannels = probeModel.getNumberOfElements()[0];
-        int nColumns = 128;
-        int nRows = 128;
-        std::vector<bool> column(nChannels, false);
-        std::vector<bool> row(nChannels, false);
-        std::fill(std::begin(column), std::begin(column)+nColumns, true);
-        std::fill(std::begin(row)+nColumns, std::begin(row)+nColumns+nRows, true);
-
-        std::vector<PwiSequence::ChannelsMask> txApertures {
-            row,
-//            column,
-//            row,
-//            column
+        std::vector<PwiSequence::Aperture> txApertures {
+            rowArray.getFullAperture(),
+//            columnArray.getFullAperture()
         };
-        std::vector<PwiSequence::ChannelsMask> rxApertures {
-            row,
-//            column,
-//            row,
-//            column
+        std::vector<PwiSequence::Aperture> rxApertures {
+            rowArray.getFullAperture(),
+//            columnArray.getFullAperture()
         };
         std::vector<float> txAngles = {
-            0, // HV
+            0, // RR
+//            0, // CC
         }; // [deg]
 
         PwiSequence seq {
-            // TODO doc
             txApertures,
             rxApertures,
             txAngles, // a list of transmit angles [rad]
@@ -98,7 +97,7 @@ int main() noexcept {
                 false // inverse?
             ),
             1540,     // speed of sound (assumed) [m/s]
-            120e-6,   // pulse repetition interval [s]
+            1000e-6,   // pulse repetition interval [s]
             // Below is the time between consecutive sequence executions ("sequence repetition interval").
             // If the total PRI for a given sequence is smaller than SRI - the last TX/RX
             // pri will be increased by SRI-sum(PRI)
@@ -109,22 +108,23 @@ int main() noexcept {
         auto result = upload(session.get(), seq);
         // Get upload results:
         // - RF buffer, which will be filled by Us4OEMS after the session is started.
-        auto buffer = std::static_pointer_cast<DataBuffer>(result.getBuffer());
+        auto buffer = std::static_pointer_cast<DataBuffer>(std::get<0>(result));
+        NdArrayDef outputDef = std::get<1>(result);
+        auto metadata = std::get<2>(result);
+
         // - RF data description - currently contains only information about frame channel mapping.
 
         PipelineRunner runner {
-            buffer,
-            result.getConstMetadata(),
+            outputDef,
+            metadata,
             // Processing steps to be performed on GPU.
-            {
-                Pipeline{{
-                    RemapToLogicalOrder{},
-                }}
-            }
+            Pipeline{{
+                RemapToLogicalOrder{},
+            }}
         };
 
         // Set dimensions of the window with B-mode image.
-        initializeDisplay(imgPipeline->getOutputShape(), imgPipeline->getOutputDataType());
+        initializeDisplay(runner.getOutputDef().getShape(), runner.getOutputDef().getType());
         // Register processing pipeline for RF channel data buffer.
         OnNewDataCallback callback = [&runner](const BufferElement::SharedHandle &ptr) mutable {
             try {
@@ -134,8 +134,8 @@ int main() noexcept {
                     ptr,
                     // A callback function that will be called when processing ends.
                     // In this case, just update Display.
-                    [](void* input) {mainDisplay.update(input);},
-                    ));
+                    [](void* input) {mainDisplay.update(input);}
+                );
             } catch (const std::exception &e) {
                 std::cout << "Exception: " << e.what() << std::endl;
             } catch (...) {
@@ -157,12 +157,3 @@ int main() noexcept {
     return 0;
 }
 
-void initializeDisplay(const std::vector<unsigned int> &inputShape, imaging::DataType type) {
-    if(inputShape.size() < 2) {
-        throw std::runtime_error("PipelineRunner's output shape should have at least 2 dimensions.");
-    }
-    mainDisplay.setNrows(inputShape[inputShape.size()-2]);
-    mainDisplay.setNcols(inputShape[inputShape.size()-1]);
-    mainDisplay.setInputDataType(type);
-
-}

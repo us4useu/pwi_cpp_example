@@ -17,29 +17,24 @@ namespace imaging {
 
 class PipelineRunner {
 public:
-    explicit PipelineRunner(std::shared_ptr<::arrus::framework::Buffer> inputBuffer,
-                            const PwiSequence &sequence,
-                            std::shared_ptr<::arrus::session::UploadConstMetadata> metadata,
-                            Pipeline pipeline);
+    explicit PipelineRunner(NdArrayDef inputDef, std::shared_ptr<Metadata> metadata, Pipeline pipeline);
 
     virtual ~PipelineRunner();
 
     void process(const ::arrus::framework::BufferElement::SharedHandle &ptr, void (*processingCallback)(void *));
 
+    const NdArrayDef &getOutputDef() const;
+
 private:
     void prepare();
 
-    Metadata convertToImagingMetadata(const std::shared_ptr<::arrus::session::UploadConstMetadata> &metadata,
-                                      const PwiSequence &sequence);
-
     std::shared_ptr<::arrus::framework::Buffer> inputBuffer;
-    std::shared_ptr<::arrus::session::UploadConstMetadata> metadata;
+    std::shared_ptr<Metadata> inputMetadata;
     Pipeline pipeline;
 
     std::vector<Kernel::Handle> kernels;
     std::vector<KernelExecutionContext> kernelExecutionCtx;
     NdArray inputGpu;
-    Metadata inputMetadata;
     // Actual arrays.
     std::vector<NdArray> kernelOutputs;
     NdArray outputHost;

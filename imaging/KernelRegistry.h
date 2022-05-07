@@ -7,16 +7,16 @@
 #include "imaging/Operation.h"
 
 namespace imaging {
-// TODO implement
 class KernelRegistry {
 public:
-    using KernelFactory = std::function<Kernel::Handle (KernelConstructionContext &)>;
+    using KernelFactory = std::function<Kernel::Handle(KernelConstructionContext &)>;
+
     static KernelRegistry getInstance() {
-        // TODO implement singleton
-        return KernelRegistry{};
+        static KernelRegistry instance;
+        return instance;
     }
 
-    Kernel::Handle createKernel(const Operation &op, KernelConstructionContext& ctx) {
+    Kernel::Handle createKernel(const Operation &op, KernelConstructionContext &ctx) {
         return kernels.at(op.getOpClassId())(ctx);
     }
 
@@ -30,6 +30,19 @@ private:
     std::unordered_map<Operation::OpClassId, KernelFactory> kernels;
 };
 
+template<typename T> class RegisterKernelOpInitializer {
+public:
+    explicit RegisterKernelOpInitializer(const Operation::OpClassId id) {
+        KernelRegistry::getInstance().registerKernelOpFactory(
+            id, [](KernelConstructionContext &ctx) { return std::make_unique<T>(ctx); });
+    }
+};
+
+#define REGISTER_KERNEL_OP(opClassId, KernelClass) \
+namespace {                                        \
+    static RegisterKernelOpInitializer<KernelClass> opInitializer{opClassId}; \
 }
+
+}// namespace imaging
 
 #endif//CPP_EXAMPLE_IMAGING_KERNELREGISTRY_H

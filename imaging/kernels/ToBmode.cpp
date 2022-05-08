@@ -15,4 +15,6 @@ void ToBModeKernel::process(KernelExecutionContext &ctx) {
     impl(ctx.getOutput(), ctx.getInput(), minDbLimit, maxDbLimit, ctx.getStream());
 }
 
+REGISTER_KERNEL_OP(OPERATION_CLASS_ID(ToBMode), ToBModeKernel)
+
 }

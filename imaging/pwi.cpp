@@ -127,6 +127,7 @@ upload(Session *session, const PwiSequence &seq, const std::vector<ProbeModelExt
     metadataBuilder.setValue("samplingFrequency", us4r->getSamplingFrequency() / seq.getDownsamplingFactor());
     metadataBuilder.addObject("sequence", std::make_shared<PwiSequence>(seq));
     metadataBuilder.addObject("rawSequence", std::make_shared<TxRxSequence>(txRxSequence));
+    metadataBuilder.addObject("probeModels", std::make_shared<std::vector<ProbeModelExt>>(probes));
 
     // Determine output size.
     auto buffer = std::static_pointer_cast<DataBuffer>(result.getBuffer());

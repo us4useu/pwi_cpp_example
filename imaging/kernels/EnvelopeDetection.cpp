@@ -11,5 +11,6 @@ EnvelopeDetectionKernel::EnvelopeDetectionKernel(KernelConstructionContext &ctx)
 void EnvelopeDetectionKernel::process(KernelExecutionContext &ctx) {
     impl(ctx.getOutput(), ctx.getInput(), ctx.getStream());
 }
+REGISTER_KERNEL_OP(OPERATION_CLASS_ID(EnvelopeDetection), EnvelopeDetectionKernel)
 
 }

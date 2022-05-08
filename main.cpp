@@ -18,6 +18,9 @@
 #include "imaging/ops/Transpose.h"
 #include "imaging/ops/BandpassFilter.h"
 #include "imaging/ops/DigitalDownConversion.h"
+#include "imaging/ops/ReconstructHri.h"
+#include "imaging/ops/EnvelopeDetection.h"
+#include "imaging/ops/ToBMode.h"
 
 #include "gui.h"
 #include "menu.h"
@@ -34,8 +37,6 @@ using namespace ::arrus_example_imaging;
 Display2D mainDisplay;
 
 // grid OX coordinates
-
-
 
 void initializeDisplay(const std::vector<unsigned int> &inputShape, ::arrus_example_imaging::DataType type) {
     if(inputShape.size() < 2) {
@@ -69,19 +70,16 @@ int main() noexcept {
 
         std::vector<PwiSequence::Aperture> txApertures {
             columnArray.getFullAperture(),
-//            columnArray.getFullAperture(),
-//            columnArray.getFullAperture()
-//            columnArray.getFullAperture()
+            columnArray.getFullAperture(),
+            columnArray.getFullAperture()
         };
         std::vector<PwiSequence::Aperture> rxApertures {
             columnArray.getFullAperture(),
-//            columnArray.getFullAperture(),
-//            columnArray.getFullAperture()
-//            columnArray.getFullAperture()
+            columnArray.getFullAperture(),
+            columnArray.getFullAperture()
         };
         std::vector<float> txAngles = {
-            0, // -10, 10 // RR
-//            0, // CC
+            0, -10, 10 // CC
         }; // [deg]
 
         for(size_t i = 0; i < txAngles.size(); ++i) {
@@ -104,7 +102,7 @@ int main() noexcept {
             // If the total PRI for a given sequence is smaller than SRI - the last TX/RX
             // pri will be increased by SRI-sum(PRI)
             50e-3,    // sequence repetition interval (an inverse of the actual b-mode frame rate) [s]
-            {0, 512},// sample range (start sample, end sample)
+            {0, 2048+1024},// sample range (start sample, end sample)
         };
 
         auto result = upload(session.get(), seq, arrayModels);
@@ -118,9 +116,11 @@ int main() noexcept {
         const std::vector<float> INITIAL_FILTER_COEFFS = {0.05892954, 0., -0.11785907, 0., 0.05892954};
         // Low-pass CIC filter coefficients (DDC).
         const std::vector<float> DDC_FILTER_COEFFS = {1, 2, 3, 4, 3, 2, 1};
-        constexpr float X_PIX_L = -19.0e-3f, X_PIX_R = 19.0e-3f, X_PIX_STEP = 0.1e-3;
         // grid OZ coordinates
-        constexpr float Z_PIX_L = 5e-3f, Z_PIX_R = 42.5e-3f, Z_PIX_STEP = 0.1e-3;
+        constexpr float X_LEFT_BORDER = -19.0e-3f, X_RIGHT_BORDER = 19.0e-3f, X_STEP = 0.1e-3;
+        constexpr float Z_LEFT_BORDER = 5e-3f, Z_RIGHT_BORDER = 42.5e-3f, Z_STEP = 0.1e-3;
+        const std::vector<float> xGrid = arange(X_LEFT_BORDER, X_RIGHT_BORDER, X_STEP);
+        const std::vector<float> zGrid = arange(Z_LEFT_BORDER, Z_RIGHT_BORDER, Z_STEP);
         PipelineRunner runner {
             outputDef,
             metadata,
@@ -131,6 +131,11 @@ int main() noexcept {
                 BandpassFilter(::arrus_example_imaging::NdArray::asarray(INITIAL_FILTER_COEFFS)),
                 DigitalDownConversion(::arrus_example_imaging::NdArray::asarray(DDC_FILTER_COEFFS),
                                       ::arrus_example_imaging::NdArray::asarray<unsigned>(4)),
+                ReconstructHri(::arrus_example_imaging::NdArray::asarray(xGrid),
+                               ::arrus_example_imaging::NdArray::asarray(zGrid)),
+                EnvelopeDetection(),
+                ToBMode(::arrus_example_imaging::NdArray::asarray<float>(0),
+                        ::arrus_example_imaging::NdArray::asarray<float>(100))
             }}
         };
 

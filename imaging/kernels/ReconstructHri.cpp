@@ -19,8 +19,8 @@ ReconstructHriKernel::ReconstructHriKernel(KernelConstructionContext &ctx) : Ker
 
     impl = ReconstructHriFunctor(zElemPos, xElemPos, elementTang);
     // Output grid
-    auto zPixCpu = ctx.getParamArray("zPix");
-    auto xPixCpu = ctx.getParamArray("xPix");
+    auto zPixCpu = ctx.getParamArray("zGrid");
+    auto xPixCpu = ctx.getParamArray("xGrid");
     zPix = zPixCpu.toGpu();
     xPix = xPixCpu.toGpu();
 
@@ -32,6 +32,7 @@ ReconstructHriKernel::ReconstructHriKernel(KernelConstructionContext &ctx) : Ker
     txAngles = NdArray::asarray(sequence->getAngles(), true);
     sos = sequence->getSpeedOfSound();
     fn = sequence->getPulse().getCenterFrequency();
+    fs = ctx.getInputMetadata()->getValue("samplingFrequency");
 
     // TODO note: here are assumption to all other tx/rx parameters
     // tx focuses: all infs (only plane waves)
@@ -41,7 +42,7 @@ ReconstructHriKernel::ReconstructHriKernel(KernelConstructionContext &ctx) : Ker
     auto probeCenterZ = probe.getElementPositionZ().get<float>(nElements/2-1);
     txApertureCenterZ = NdArray::vector<float>(nTx, probeCenterZ).toGpu();
     txApertureFirstElement = NdArray::zeros<unsigned>(nTx).toGpu();
-    txApertureLastElement = NdArray::vector<unsigned>(nTx, nElements).toGpu();
+    txApertureLastElement = NdArray::vector<unsigned>(nTx, nElements-1).toGpu();
     rxApertureOrigin = NdArray::zeros<float>(nTx);
 
     // TODO parametrize the below
@@ -58,7 +59,7 @@ ReconstructHriKernel::ReconstructHriKernel(KernelConstructionContext &ctx) : Ker
 
     float burstFactor = sequence->getPulse().getNPeriods() / (2 * fn);
 
-    // TODO us4R specific
+    // TODO note: us4R specific
     initDelay = -(startSample/65e6f) // start sample (via nominal sampling frequency)
               + centerDelay
               + burstFactor;
@@ -72,5 +73,7 @@ void ReconstructHriKernel::process(KernelExecutionContext &ctx) {
          txApertureFirstElement, txApertureLastElement, rxApertureOrigin, nElements, sos, fs, fn,
          minRxTang, maxRxTang, initDelay, ctx.getStream());
 }
+
+REGISTER_KERNEL_OP(OPERATION_CLASS_ID(ReconstructHri), ReconstructHriKernel)
 
 }

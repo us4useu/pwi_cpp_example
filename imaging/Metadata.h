@@ -67,10 +67,10 @@ public:
     }
 
     template<typename T> void addObject(const std::string &key, const std::shared_ptr<T> &ptr) {
-        ptrs.insert({key, std::static_pointer_cast<void>(ptr)});
+        ptrs[key] = std::static_pointer_cast<void>(ptr);
     }
 
-    void setValue(const std::string &key, float value) { values.insert({key, value}); }
+    void setValue(const std::string &key, float value) { values[key] = value; }
 
     Metadata build() { return Metadata(ptrs, values); }
 

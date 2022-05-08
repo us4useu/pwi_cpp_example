@@ -29,6 +29,7 @@ public:
 
     void registerKernelOpFactory(const Operation::OpClassId &classId, KernelFactory factory) {
         // TODO wrap it as a macro, that can be called in .cpp
+        // TODO check if a kernel with given class id already exists (if so, throw excception)
         kernels.insert({classId, factory});
     }
 

@@ -14,11 +14,12 @@ __constant__ float zElemConst[256];
 __constant__ float xElemConst[256];
 __constant__ float tangElemConst[256];
 
-__global__ void iqRaw2Hri(float2 *iqLri, const float2 *iqRaw, const int nElem, const int nSeq, const int nTx, const int nSamp,
+__global__ void iqRaw2Hri(float2 *iqLri, const float2 *iqRaw, const unsigned nElem, const unsigned nSeq,
+                          const unsigned nTx, const unsigned nSamp,
                           const float *zPix, const int nZPix, const float *xPix, const int nXPix, float const sos,
                           float const fs, float const fn, const float *txFoc, const float *txAngZX,
                           const float *txApCentZ, const float *txApCentX, const unsigned *txApFstElem,
-                          const unsigned *txApLstElem, const unsigned *rxApOrigElem, const int nRx, const float minRxTang,
+                          const unsigned *txApLstElem, const unsigned *rxApOrigElem, const unsigned nRx, const float minRxTang,
                           const float maxRxTang, const float initDel) {
 
     int z = blockIdx.x * blockDim.x + threadIdx.x;
@@ -43,7 +44,7 @@ __global__ void iqRaw2Hri(float2 *iqLri, const float2 *iqRaw, const int nElem, c
     complex<float> a(0.0f, 0.0f), b(0.0f, 0.0f), resultPix(0.0f, 0.0f);
     float2 aRaw, bRaw;
 
-    int sequenceOffset = sequenceNr * nSamp * nRx;
+    int sequenceOffset = sequenceNr * nTx * nSamp * nRx;
 
     for(int iTx = 0; iTx < nTx; ++iTx) {
         if (!isinf(txFoc[iTx])) {
@@ -168,8 +169,8 @@ void ReconstructHriFunctor::operator()(NdArray &output, const NdArray &input, co
     dim3 block(16, 16, 4);
     unsigned nSequences = input.getShape()[0];
     unsigned nTx = input.getShape()[1];
-    unsigned nSamples = input.getShape()[2];
-    unsigned nRx = input.getShape()[3];
+    unsigned nRx = input.getShape()[2];
+    unsigned nSamples = input.getShape()[3];
 
     unsigned nz = zPix.getShape()[0];
     unsigned nx = xPix.getShape()[0];

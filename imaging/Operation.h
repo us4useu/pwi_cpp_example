@@ -20,7 +20,12 @@ public:
         : params(std::move(params)) {}
 
     const NdArray &getArray(const std::string &key) const {
-        return params.at(key);
+        try {
+            return params.at(key);
+        }
+        catch(const std::out_of_range &e) {
+            throw std::runtime_error("There is not Op parameter with key: " + key);
+        }
     }
 private:
     Container params;
@@ -56,7 +61,7 @@ public:
     }
 
     OperationBuilder& addParam(const std::string& key, const NdArray &arr) {
-        this->params.insert({key, arr});
+        this->params[key] = arr;
         return *this;
     }
 

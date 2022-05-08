@@ -54,9 +54,9 @@ DigitalDownConversionKernel::DigitalDownConversionKernel(KernelConstructionConte
     ctx.getOutputMetadataBuilder().setValue("samplingFrequency", samplingFrequency/decimationFactor);
 }
 void DigitalDownConversionKernel::process(KernelExecutionContext &ctx) {
-    demodImpl(demodulatedData, ctx.getInput(), totalNSamples, nSamples, demodSampleCoeff, ctx.getStream());
+    demodImpl(demodulatedData, ctx.getInput(), nSamples, totalNSamples, demodSampleCoeff, ctx.getStream());
     lpImpl(filteredData, demodulatedData, nSamples, totalNSamples, lpnCoefficients, ctx.getStream());
     decImpl(ctx.getOutput(), filteredData, totalOutputNSamples, nSamples, decimationFactor, ctx.getStream());
 }
-
+REGISTER_KERNEL_OP(OPERATION_CLASS_ID(DigitalDownConversion), DigitalDownConversionKernel)
 }

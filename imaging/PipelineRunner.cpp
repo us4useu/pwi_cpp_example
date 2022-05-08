@@ -28,7 +28,7 @@ void PipelineRunner::prepare() {
 
     for (auto &op : pipeline.getOps()) {
         // Create Construction context: getArray the current NdArrayDef (start with inputDef),
-        KernelConstructionContext constructionContext{currentInputDef, currentInputDef, inputMetadata, op.getParams()};
+        KernelConstructionContext constructionContext{currentInputDef, currentInputDef, currentMetadata, op.getParams()};
         // determine kernel, run factory function from Registry
         // Create output array for that kernel, create context for that
         Kernel::Handle kernel = registry.createKernel(op, constructionContext);

@@ -9,8 +9,8 @@
  */
 class MyCustomLogger : public ::arrus::Logger {
 public:
-    explicit MyCustomLogger(arrus::LogSeverity loggingLevel)
-    : loggingLevel(loggingLevel) {}
+    explicit MyCustomLogger(arrus::LogSeverity loggingLevel, std::string deviceId)
+    : loggingLevel(loggingLevel), deviceId(std::move(deviceId)) {}
 
     /**
      * Prints a message with given severity to stderr.
@@ -22,13 +22,16 @@ public:
     void
     log(const arrus::LogSeverity severity, const std::string &msg) override {
         if(severity >= loggingLevel) {
-            std::cerr << "[" << severityToString(severity) << "]: " << msg << std::endl;
+            std::cerr << "[" << deviceId << "]" << "[" << severityToString(severity) << "]: " << msg << std::endl;
         }
     }
 
     void
-    setAttribute(const std::string &key, const std::string &value) override
-    {}
+    setAttribute(const std::string &key, const std::string &value) override {
+        if(key == "DeviceId") {
+            deviceId = value;
+        }
+    }
 private:
 
     std::string severityToString(const arrus::LogSeverity severity) {
@@ -42,8 +45,8 @@ private:
             default: return "unknown";
         }
     }
-
     arrus::LogSeverity loggingLevel;
+    std::string deviceId{"unknown device"};
 };
 
 #endif //CPP_EXAMPLE_MYCUSTOMLOGGER_H

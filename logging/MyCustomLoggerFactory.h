@@ -17,12 +17,19 @@ public:
      * Returns a new Logger instance.
      */
     arrus::Logger::Handle getLogger() override {
-        return std::make_unique<MyCustomLogger>(severityLevel);
+        return getLogger({});
+
     }
 
-    arrus::Logger::Handle getLogger(
-            const std::vector<arrus::Logger::Attribute> &attributes) override {
-        return getLogger();
+    arrus::Logger::Handle getLogger(const std::vector<arrus::Logger::Attribute> &attributes) override {
+        std::string deviceId{"-"};
+        for(auto &[key, value]: attributes) {
+            std::cout << "key: " << key << std::endl;
+            if(key == "DeviceId") {
+                deviceId = value;
+            }
+        }
+        return std::make_unique<MyCustomLogger>(severityLevel, deviceId);
     }
 private:
     ::arrus::LogSeverity severityLevel;

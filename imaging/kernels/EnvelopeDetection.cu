@@ -3,7 +3,7 @@
 
 #include "EnvelopeDetection.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 __global__ void gpuEnvelopeDetection(float *output, const float2 *input, const unsigned totalNSamples) {
     int idx = threadIdx.x + blockDim.x * blockIdx.x;
     if (idx >= totalNSamples) {
@@ -21,6 +21,6 @@ void EnvelopeDetectionFunctor::operator()(NdArray &output, const NdArray &input,
                                                      totalNSamples);
     CUDA_ASSERT(cudaGetLastError());
 }
-}// namespace arrus::imaging
+}// namespace arrus_example_imaging
 
 #endif

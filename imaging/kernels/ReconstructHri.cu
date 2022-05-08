@@ -6,7 +6,7 @@
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 using namespace thrust;
 
@@ -197,6 +197,6 @@ void ReconstructHriFunctor::operator()(NdArray &output, const NdArray &input, co
     CUDA_ASSERT(cudaGetLastError());
 }
 
-}// namespace arrus::imaging
+}// namespace arrus_example_imaging
 
 #endif//CPP_EXAMPLE_KERNELS_RECONSTRUCT_LRI_PWI_CUH

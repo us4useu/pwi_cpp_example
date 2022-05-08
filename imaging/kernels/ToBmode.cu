@@ -3,7 +3,7 @@
 
 #include "ToBmode.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 __global__ void gpuBMode(uint8_t *output, const float *input,
                          const float minDBLimit, const float maxDBLimit,

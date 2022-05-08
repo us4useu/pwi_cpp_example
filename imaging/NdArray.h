@@ -11,7 +11,7 @@
 #include "CudaUtils.cuh"
 #include "DataType.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 typedef std::vector<unsigned> DataShape;
 typedef DataType DataType;
@@ -626,6 +626,6 @@ private:
     bool gpu{false};
     bool isExternal{false};
 };
-}// namespace arrus::imaging
+}// namespace arrus_example_imaging
 
 #endif//CPP_EXAMPLE_NDARRAY_H

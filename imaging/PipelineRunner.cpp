@@ -9,7 +9,7 @@
 #include "imaging/KernelRegistry.h"
 #include "pwi.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 PipelineRunner::PipelineRunner(NdArrayDef inputDef, std::shared_ptr<Metadata> metadata, Pipeline pipeline)
     : inputDef(std::move(inputDef)), inputMetadata(std::move(metadata)), pipeline(std::move(pipeline)) {
@@ -80,4 +80,4 @@ void PipelineRunner::process(const ::arrus::framework::BufferElement::SharedHand
     //    CUDA_ASSERT(cudaLaunchHostFunc(processingStream, processingCallback, outputHost.getPtr<void>()));
 }
 const NdArrayDef &PipelineRunner::getOutputDef() const { return outputDef; }
-}// namespace arrus::imaging
+}// namespace arrus_example_imaging

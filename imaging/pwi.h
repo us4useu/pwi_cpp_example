@@ -8,11 +8,11 @@
 #include "imaging/ProbeModelExt.h"
 #include "imaging/Metadata.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 class PwiSequence {
 public:
-    using Aperture = imaging::ProbeModelExt::Aperture;
+    using Aperture = ProbeModelExt::Aperture;
 
     PwiSequence(std::vector<Aperture> txApertures, std::vector<Aperture> rxApertures, std::vector<float> angles,
                 const arrus::ops::us4r::Pulse &pulse, float speedOfSound, float pri, const std::optional<float> &sri,
@@ -46,7 +46,7 @@ private:
 /**
  * Uploads a given PWI sequence on the devices in the session.
  */
-std::tuple<std::shared_ptr<::arrus::framework::Buffer>, imaging::NdArrayDef, std::shared_ptr<Metadata>>
+std::tuple<std::shared_ptr<::arrus::framework::Buffer>, NdArrayDef, std::shared_ptr<Metadata>>
 upload(::arrus::session::Session *session, const PwiSequence &seq, const std::vector<ProbeModelExt> &probes);
 
 }

@@ -3,7 +3,7 @@
 
 #include "imaging/Operation.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 /**
  * Reorders input array columns according to
@@ -19,6 +19,6 @@ private:
     Operation op;
 };
 
-}// namespace arrus::imaging
+}// namespace arrus_example_imaging
 
 #endif//CPP_EXAMPLE_IMAGING_OPS_REMAPTOLOGICALORDER_H

@@ -28,7 +28,7 @@ using namespace ::arrus::session;
 using namespace ::arrus::devices;
 using namespace ::arrus::ops::us4r;
 using namespace ::arrus::framework;
-using namespace ::arrus::imaging;
+using namespace ::arrus_example_imaging;
 
 // An object representing window that displays the data.
 Display2D mainDisplay;
@@ -37,7 +37,7 @@ Display2D mainDisplay;
 
 
 
-void initializeDisplay(const std::vector<unsigned int> &inputShape, ::arrus::imaging::DataType type) {
+void initializeDisplay(const std::vector<unsigned int> &inputShape, ::arrus_example_imaging::DataType type) {
     if(inputShape.size() < 2) {
         throw std::runtime_error("PipelineRunner's output shape should have at least 2 dimensions.");
     }
@@ -128,9 +128,9 @@ int main() noexcept {
             Pipeline{{
                 RemapToLogicalOrder{},
                 Transpose{},
-                BandpassFilter(::arrus::imaging::NdArray::asarray(INITIAL_FILTER_COEFFS)),
-                DigitalDownConversion(::arrus::imaging::NdArray::asarray(DDC_FILTER_COEFFS),
-                                      ::arrus::imaging::NdArray::asarray<unsigned>(4)),
+                BandpassFilter(::arrus_example_imaging::NdArray::asarray(INITIAL_FILTER_COEFFS)),
+                DigitalDownConversion(::arrus_example_imaging::NdArray::asarray(DDC_FILTER_COEFFS),
+                                      ::arrus_example_imaging::NdArray::asarray<unsigned>(4)),
             }}
         };
 

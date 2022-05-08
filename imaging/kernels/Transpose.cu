@@ -3,7 +3,7 @@
 
 #include "Transpose.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 #define GPU_TRANSPOSE_TILE_DIM 32
 

@@ -1,6 +1,6 @@
 #include "Transpose.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 TransposeKernel::TransposeKernel(KernelConstructionContext &ctx) : Kernel(ctx) {
     auto &input = ctx.getInput();

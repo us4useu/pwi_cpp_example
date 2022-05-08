@@ -2,7 +2,7 @@
 
 #include <arrus/core/api/arrus.h>
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 RemapToLogicalOrderKernel::RemapToLogicalOrderKernel(KernelConstructionContext &ctx) : Kernel(ctx) {
     auto fcm = ctx.getInputMetadata()->getObject<arrus::devices::FrameChannelMapping>("frameChannelMapping");
@@ -46,4 +46,4 @@ void RemapToLogicalOrderKernel::process(KernelExecutionContext &ctx) {
 
 REGISTER_KERNEL_OP(OPERATION_CLASS_ID(RemapToLogicalOrder), RemapToLogicalOrderKernel);
 
-}// namespace arrus::imaging
+}// namespace arrus_example_imaging

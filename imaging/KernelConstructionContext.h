@@ -7,7 +7,7 @@
 #include "imaging/Operation.h"
 #include "imaging/Metadata.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 class KernelConstructionContext {
 public:
     KernelConstructionContext(NdArrayDef input, NdArrayDef output, std::shared_ptr<Metadata> inputMetadata,
@@ -37,5 +37,5 @@ private:
     MetadataBuilder outputMetadataBuilder;
     OpParameters parameters;
 };
-}// namespace arrus::imaging
+}// namespace arrus_example_imaging
 #endif//CPP_EXAMPLE_KERNELS_KERNELINITCONTEXT_H

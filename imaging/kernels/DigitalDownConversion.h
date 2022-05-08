@@ -6,7 +6,7 @@
 #include "imaging/ops/DigitalDownConversion.h"
 #include "imaging/KernelRegistry.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 class QuadratureDemodulationFunctor {
 public:

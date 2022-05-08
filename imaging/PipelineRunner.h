@@ -13,7 +13,7 @@
 #include "imaging/ops/Pipeline.h"
 #include "pwi.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 class PipelineRunner {
 public:
@@ -42,5 +42,5 @@ private:
     cudaStream_t processingStream;
 
 };
-}// namespace arrus::imaging
+}// namespace arrus_example_imaging
 #endif//CPP_EXAMPLE_PIPELINE_RUNNER_H

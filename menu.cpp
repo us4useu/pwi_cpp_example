@@ -75,7 +75,7 @@ void setLnaGain(Us4R *us4r) {
     }
 }
 
-void setLinearTgc(Us4R *us4r, const ::arrus::imaging::PwiSequence &seq) {
+void setLinearTgc(Us4R *us4r, const ::arrus_example_imaging::PwiSequence &seq) {
     try {
         float tgcStart, tgcSlope;
         std::cout << "TGC curve start value [dB]" << std::endl;
@@ -98,7 +98,7 @@ void setLinearTgc(Us4R *us4r, const ::arrus::imaging::PwiSequence &seq) {
     }
 }
 
-void runMainMenu(Us4R *us4r, const ::arrus::imaging::PwiSequence &sequence) {
+void runMainMenu(Us4R *us4r, const ::arrus_example_imaging::PwiSequence &sequence) {
     // Here the main thread waits until user presses 'q' button.
     // All the processing and displaying is done by callback threads.
     char lastChar = 0;

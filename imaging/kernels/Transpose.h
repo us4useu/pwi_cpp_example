@@ -6,7 +6,7 @@
 #include "imaging/ops/Transpose.h"
 #include "imaging/KernelRegistry.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 class TransposeFunctor {
 public:

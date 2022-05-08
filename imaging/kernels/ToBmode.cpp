@@ -1,6 +1,6 @@
 #include "ToBmode.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 ToBModeKernel::ToBModeKernel(KernelConstructionContext &ctx) : Kernel(ctx) {
     auto &input = ctx.getInput();

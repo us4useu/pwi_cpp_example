@@ -3,7 +3,7 @@
 
 #include "imaging/Operation.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 /**
  * Transposes by the last two axes of array.

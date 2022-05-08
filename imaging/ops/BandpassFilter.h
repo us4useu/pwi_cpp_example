@@ -3,7 +3,7 @@
 
 #include "imaging/Operation.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 /**
  * Applies given bandpass filter.
@@ -23,5 +23,5 @@ private:
     Operation op;
 };
 
-}// namespace arrus::imaging
+}// namespace arrus_example_imaging
 #endif//CPP_EXAMPLE_IMAGING_OPS_BANDPASSFILTER_H

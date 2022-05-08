@@ -6,7 +6,7 @@
 #include "imaging/ops/EnvelopeDetection.h"
 #include "imaging/KernelRegistry.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 class EnvelopeDetectionFunctor {
 public:

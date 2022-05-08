@@ -2,7 +2,7 @@
 
 #include "imaging/pwi.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 ReconstructHriKernel::ReconstructHriKernel(KernelConstructionContext &ctx) : Kernel(ctx) {
     // Probe parameters.

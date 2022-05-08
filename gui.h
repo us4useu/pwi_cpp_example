@@ -53,18 +53,18 @@ public:
         Display2D::ncols = ncols;
     }
 
-    void setInputDataType(::arrus::imaging::DataType inputDataType) {
+    void setInputDataType(::arrus_example_imaging::DataType inputDataType) {
         switch(inputDataType) {
-        case ::arrus::imaging::DataType::INT16:
+        case ::arrus_example_imaging::DataType::INT16:
                 inputDataTypeCv = CV_16S;
                 break;
-        case ::arrus::imaging::DataType::UINT8:
+        case ::arrus_example_imaging::DataType::UINT8:
                 inputDataTypeCv = CV_8U;
                 break;
-        case ::arrus::imaging::DataType::FLOAT32:
+        case ::arrus_example_imaging::DataType::FLOAT32:
                 inputDataTypeCv = CV_32F;
                 break;
-        case ::arrus::imaging::DataType::COMPLEX64:
+        case ::arrus_example_imaging::DataType::COMPLEX64:
                 inputDataTypeCv = CV_32FC2;
                 break;
             default:

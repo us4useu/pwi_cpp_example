@@ -4,7 +4,7 @@
 #include "imaging/CudaUtils.cuh"
 #include "imaging/kernels/RemapToLogicalOrder.h"
 
-namespace arrus::imaging {
+namespace arrus_example_imaging {
 
 /**
  * Generic implementation of remapping the input data from us4OEM specific order (determined by the us4OEM
@@ -85,6 +85,6 @@ void RemapToLogicalOrderFunctor::operator()(NdArray &output, const NdArray &inpu
     CUDA_ASSERT(cudaGetLastError());
 }
 
-}// namespace arrus::imaging
+}// namespace arrus_example_imaging
 
 #endif//CPP_EXAMPLE_KERNELS_REMAPTOLOGICALORDER_CUH

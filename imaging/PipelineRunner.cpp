@@ -13,7 +13,7 @@ namespace imaging {
 
 PipelineRunner::PipelineRunner(NdArrayDef inputDef, std::shared_ptr<Metadata> metadata, Pipeline pipeline)
     : inputDef(std::move(inputDef)), inputMetadata(std::move(metadata)), pipeline(std::move(pipeline)) {
-    inputGpu = NdArray{inputDef, true};
+    inputGpu = NdArray{this->inputDef, true};
     CUDA_ASSERT(cudaStreamCreate(&processingStream));
     prepare();
 }
@@ -21,8 +21,7 @@ PipelineRunner::PipelineRunner(NdArrayDef inputDef, std::shared_ptr<Metadata> me
 PipelineRunner::~PipelineRunner() { CUDA_ASSERT_NO_THROW(cudaStreamDestroy(processingStream)); }
 
 void PipelineRunner::prepare() {
-
-    KernelRegistry registry;
+    auto &registry = KernelRegistry::getInstance();
     NdArrayDef currentInputDef = inputDef;
     std::shared_ptr<Metadata> currentMetadata = inputMetadata;
     NdArray currentInputArray = inputGpu.createView();

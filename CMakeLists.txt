@@ -6,9 +6,9 @@ project(cpp_example LANGUAGES CXX CUDA)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_BINARY_DIR}")
 find_package(OpenCV REQUIRED)
 # TODO change the below path appropriately.
-set(ARRUS_INCLUDE_PATH /home/pjarosik/lib/local/arrus/develop/include)
+set(ARRUS_INCLUDE_PATH /home/pjarosik/lib/arrus-releases/develop/include)
 # TODO change the below path appropriately.
-set(ARRUS_LIB_PATH /home/pjarosik/lib/local/arrus/develop/lib64)
+set(ARRUS_LIB_PATH /home/pjarosik/lib/arrus-releases/develop/lib64)
 
 set(GPU_SRC
     # Imaging
@@ -69,8 +69,6 @@ set(MAIN_SRC
     imaging/ops/RemapToLogicalOrder.h
     imaging/kernels/RemapToLogicalOrder.cpp
 )
-
-
 
 add_executable(pwi_example ${MAIN_SRC})
 target_include_directories(pwi_example PRIVATE ${ARRUS_INCLUDE_PATH} ${CMAKE_SOURCE_DIR})

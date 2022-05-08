@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 #include <limits>
+#include <sstream>
 
 #include "CudaUtils.cu"
 #include "DataType.h"
@@ -281,7 +282,7 @@ public:
         auto* outputContainer = (float*)result.ptr;
 
         for(size_t i = 0; i < nElements; ++i) {
-            outputContainer[i] = this->get<float>(i) * other.get<float>(i);
+            outputContainer[i] = this->get<float>(i) + other.get<float>(i);
         }
         return result;
     }
@@ -424,7 +425,7 @@ public:
         auto nElements = getNumberOfElements();
         std::vector<T> result(nElements);
         for(size_t i = 0; i < nElements; ++i) {
-            result.push_back(get<T>(i));
+            result[i] = get<T>(i);
         }
         return result;
     }
@@ -439,6 +440,19 @@ public:
         }
         this->shape = newShape;
         return *this;
+    }
+
+    std::string toString() const {
+        std::ostringstream ss;
+        ss << "NdArray, shape: (";
+        for(auto value: shape) {
+            ss << value << ",";
+        }
+        ss << "), values: ";
+        for(int i = 0; i < getNumberOfElements(); ++i) {
+            ss << get<float>(i) << ", ";
+        }
+        return ss.str();
     }
 
 private:

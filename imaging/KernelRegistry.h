@@ -12,7 +12,7 @@ class KernelRegistry {
 public:
     using KernelFactory = std::function<Kernel::Handle(KernelConstructionContext &)>;
 
-    static KernelRegistry getInstance() {
+    static KernelRegistry &getInstance() {
         static KernelRegistry instance;
         return instance;
     }

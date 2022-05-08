@@ -13,7 +13,7 @@ public:
         : input(std::move(input)), output(std::move(output)), inputMetadata(std::move(inputMetadata)) {
 
         // Start with the input metadata.
-        outputMetadataBuilder = MetadataBuilder{inputMetadata};
+        outputMetadataBuilder = MetadataBuilder{this->inputMetadata};
     }
 
     const NdArrayDef &getInput() const { return input; }

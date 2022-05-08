@@ -66,26 +66,35 @@ int main() noexcept {
         // that uses ARRUS into try ..catch clauses.
         ::arrus::setLoggerFactory(std::make_shared<MyCustomLoggerFactory>(::arrus::LogSeverity::INFO));
 
-        auto session = ::arrus::session::createSession("C:/Users/Public/us4r.prototxt");
+        auto session = ::arrus::session::createSession("/home/pjarosik/us4r.prototxt");
         auto us4r = (::arrus::devices::Us4R *) session->getDevice("/Us4R:0");
 
         auto fullArray = us4r->getProbe(0)->getModel();
-        ProbeModelExt columnArray{0, fullArray, 0, 128, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OX};
-        ProbeModelExt rowArray{1, fullArray, 128, 256, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OY};
-        std::vector<ProbeModelExt> arrayModels = {columnArray, rowArray};
+        ProbeModelExt columnArray{0, fullArray, 0, 128, 0.245e-3f, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OX};
+//        ProbeModelExt rowArray{1, fullArray, 128, 256, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OY};
+        std::vector<ProbeModelExt> arrayModels = {columnArray, };// rowArray};
 
         std::vector<PwiSequence::Aperture> txApertures {
-            rowArray.getFullAperture(),
+            columnArray.getFullAperture(),
+//            columnArray.getFullAperture(),
+//            columnArray.getFullAperture()
 //            columnArray.getFullAperture()
         };
         std::vector<PwiSequence::Aperture> rxApertures {
-            rowArray.getFullAperture(),
+            columnArray.getFullAperture(),
+//            columnArray.getFullAperture(),
+//            columnArray.getFullAperture()
 //            columnArray.getFullAperture()
         };
         std::vector<float> txAngles = {
-            0, // RR
+            0, -10, 10 // RR
 //            0, // CC
         }; // [deg]
+
+        for(size_t i = 0; i < txAngles.size(); ++i) {
+            txAngles[i] = txAngles[i]*PI/180.0f;
+        }
+        // Now txAngles are in radians
 
         PwiSequence seq {
             txApertures,
@@ -102,7 +111,7 @@ int main() noexcept {
             // If the total PRI for a given sequence is smaller than SRI - the last TX/RX
             // pri will be increased by SRI-sum(PRI)
             50e-3,    // sequence repetition interval (an inverse of the actual b-mode frame rate) [s]
-            {0, 2048},// sample range (start sample, end sample)
+            {0, 512},// sample range (start sample, end sample)
         };
 
         auto result = upload(session.get(), seq, arrayModels);
@@ -149,9 +158,9 @@ int main() noexcept {
         runMainMenu(us4r, seq);
         // Exit after stopping the scheme.
         session->stopScheme();
-
+        std::cout << "Done" << std::endl;
     } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << "Exception: " << e.what() << std::endl;
         return -1;
     }
     return 0;

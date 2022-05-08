@@ -5,9 +5,9 @@
 #include "imaging/Operation.h"
 #include "imaging/ops/BandpassFilter.h"
 #include "imaging/KernelRegistry.h"
-#include "pwi.h"
+#include "imaging/pwi.h"
 
-namespace imaging {
+namespace arrus::imaging {
 
 class ReconstructHriFunctor {
 public:

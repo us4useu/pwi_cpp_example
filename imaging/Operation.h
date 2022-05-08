@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include "NdArray.h"
 
-namespace imaging {
+namespace arrus::imaging {
 
 #define OPERATION_CLASS_ID(Type) #Type
 
@@ -69,6 +69,6 @@ private:
     OpParameters::Container params;
 };
 
-}// namespace imaging
+}// namespace arrus::imaging
 
 #endif//CPP_EXAMPLE_IMAGING_OPERATION_H

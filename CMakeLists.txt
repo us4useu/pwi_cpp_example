@@ -33,8 +33,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(MAIN_SRC
     main.cpp
     gui.h
-    pwi.h
-    pwi.cpp
+    imaging/pwi.h
+    imaging/pwi.cpp
     menu.cpp
     common.h
     common.cpp

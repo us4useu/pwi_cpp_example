@@ -6,7 +6,7 @@
 #include "imaging/NdArray.h"
 #include <utility>
 
-namespace imaging {
+namespace arrus::imaging {
 /**
  * An adapter to arrus::devices::ProbeModel class. Note: the functions available in this
  * class will be moved in some time to the arrus::devices::ProbeModelExt implementation.
@@ -148,6 +148,6 @@ private:
     float pitch;
     Axis axis;
 };
-}// namespace imaging
+}// namespace arrus::imaging
 
 #endif//CPP_EXAMPLE_IMAGING_PROBEMODELEXT_H

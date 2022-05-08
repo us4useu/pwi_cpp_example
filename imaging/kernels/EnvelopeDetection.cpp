@@ -1,6 +1,6 @@
 #include "EnvelopeDetection.h"
 
-namespace imaging {
+namespace arrus::imaging {
 
 EnvelopeDetectionKernel::EnvelopeDetectionKernel(KernelConstructionContext &ctx) : Kernel(ctx) {
     auto &input = ctx.getInput();

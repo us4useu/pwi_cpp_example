@@ -1,7 +1,7 @@
 #include "DigitalDownConversion.h"
 #include <arrus/core/api/arrus.h>
 
-namespace imaging {
+namespace arrus::imaging {
 
 DigitalDownConversionKernel::DigitalDownConversionKernel(KernelConstructionContext &ctx) : Kernel(ctx) {
     auto &input = ctx.getInput();

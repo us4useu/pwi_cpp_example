@@ -6,7 +6,7 @@
 #include "imaging/ops/BandpassFilter.h"
 #include "imaging/KernelRegistry.h"
 
-namespace imaging {
+namespace arrus::imaging {
 
 class BandpassFilterFunctor {
 public:

@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <stdexcept>
 
-namespace imaging {
+namespace arrus::imaging {
 
 class MetadataBuilder;
 
@@ -81,6 +81,6 @@ private:
     std::unordered_map<std::string, float> values;
 };
 
-}// namespace imaging
+}// namespace arrus::imaging
 
 #endif

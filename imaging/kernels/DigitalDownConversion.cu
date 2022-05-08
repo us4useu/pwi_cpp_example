@@ -1,6 +1,6 @@
 #include "DigitalDownConversion.h"
 
-namespace imaging {
+namespace arrus::imaging {
 
 // ------------------------------------------ Demodulation.
 __global__ void gpuRfToIq(float2 *output, const float *input, const float sampleCoeff, const unsigned nSamples,
@@ -109,4 +109,4 @@ void DecimationFunctor::operator()(NdArray &output, const NdArray &input,
                                               totalOutputNSamples, decimationFactor);
     CUDA_ASSERT(cudaGetLastError());
 }
-}// namespace imaging
+}// namespace arrus::imaging

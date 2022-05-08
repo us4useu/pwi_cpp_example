@@ -3,7 +3,7 @@
 #include <iostream>
 #include "arrus/core/api/arrus.h"
 #include "constants.h"
-#include "pwi.h"
+#include "imaging/pwi.h"
 #include "common.h"
 
 using namespace ::arrus::devices;

@@ -5,7 +5,7 @@
 #include <vector>
 #include "imaging/Operation.h"
 
-namespace imaging {
+namespace arrus::imaging {
 class Pipeline {
 public:
     explicit Pipeline(std::vector<Operation> ops) : ops(std::move(ops)) {}

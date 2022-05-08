@@ -2,7 +2,7 @@
 #define CPP_EXAMPLE_MENU_H
 
 #include "arrus/core/api/arrus.h"
-#include "pwi.h"
+#include "imaging/pwi.h"
 
 /**
  * Runs main menu loop (asks user for input, applies new settings, etc.).

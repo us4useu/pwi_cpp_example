@@ -10,6 +10,8 @@ using namespace ::arrus::session;
 using namespace ::arrus::ops::us4r;
 using namespace ::arrus::framework;
 
+namespace arrus::imaging {
+
 /**
  * A function that converts vector of delays with n elements
  * to a vector with m elements, where m is the the number
@@ -40,7 +42,7 @@ std::vector<float> toVectorOfDeviceDelays(const std::vector<bool> &txAperture, c
 /**
  * Note: this function works only with full TX/RX apertures.
  */
-TxRxSequence createPwiSequence(const PwiSequence &seq, const std::vector<::imaging::ProbeModelExt> &probes) {
+TxRxSequence createPwiSequence(const PwiSequence &seq, const std::vector<::arrus::imaging::ProbeModelExt> &probes) {
     // Apertures
     if (seq.getTxApertures().size() != seq.getRxApertures().size()
         || seq.getTxApertures().size() != seq.getAngles().size()) {
@@ -49,7 +51,7 @@ TxRxSequence createPwiSequence(const PwiSequence &seq, const std::vector<::imagi
     auto nTxRxs = seq.getTxApertures().size();
     // Delays
     std::vector<float> centerDelays(nTxRxs);
-    std::vector<::imaging::NdArray> delays(nTxRxs);
+    std::vector<::arrus::imaging::NdArray> delays(nTxRxs);
 
     float txCenterLateral = 0.0f;// Note: currently only a full TX aperture centered on lateral position is supported
 
@@ -59,11 +61,11 @@ TxRxSequence createPwiSequence(const PwiSequence &seq, const std::vector<::imagi
         auto angle = seq.getAngles()[i];
 
         auto &txProbe = probes[txAperture.getOrdinal()];
-        const ::imaging::NdArray &positionLateral =
+        const ::arrus::imaging::NdArray &positionLateral =
             txProbe.isOX() ? txProbe.getElementPositionX() : txProbe.getElementPositionY();
-        const ::imaging::NdArray &positionAxial = txProbe.getElementPositionZ();
+        const ::arrus::imaging::NdArray &positionAxial = txProbe.getElementPositionZ();
 
-        ::imaging::NdArray d =
+        ::arrus::imaging::NdArray d =
             (positionLateral * std::sin(angle) + positionAxial * std::cos(angle)) / seq.getSpeedOfSound();
         d = d - d.min<float>();
         delays[i] = d;
@@ -108,8 +110,8 @@ TxRxSequence createPwiSequence(const PwiSequence &seq, const std::vector<::imagi
  * @param probes list of probe definitions used in this session, note:
  * @return a tuple: (output data buffer, output dimensions, output metadata)
  */
-std::tuple<std::shared_ptr<::arrus::framework::Buffer>, imaging::NdArrayDef, std::shared_ptr<::imaging::Metadata>>
-upload(Session *session, const PwiSequence &seq, const std::vector<::imaging::ProbeModelExt> &probes) {
+std::tuple<std::shared_ptr<::arrus::framework::Buffer>, imaging::NdArrayDef, std::shared_ptr<::arrus::imaging::Metadata>>
+upload(Session *session, const PwiSequence &seq, const std::vector<::arrus::imaging::ProbeModelExt> &probes) {
     auto *us4r = (::arrus::devices::Us4R *) session->getDevice("/Us4R:0");
 
     auto txRxSequence = createPwiSequence(seq, probes);
@@ -132,6 +134,7 @@ upload(Session *session, const PwiSequence &seq, const std::vector<::imaging::Pr
         throw std::runtime_error("The output buffer should have at least one element.");
     }
     auto outputShape = buffer->getElement(0)->getData().getShape().getValues();
-    ::imaging::NdArrayDef outputDef{outputShape, imaging::DataType::INT16};
+    ::arrus::imaging::NdArrayDef outputDef{outputShape, imaging::DataType::INT16};
     return {result.getBuffer(), outputDef, metadataBuilder.buildSharedPtr()};
+}
 }

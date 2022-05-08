@@ -6,7 +6,7 @@
 #include "imaging/ops/RemapToLogicalOrder.h"
 #include "imaging/KernelRegistry.h"
 
-namespace imaging {
+namespace arrus::imaging {
 
 class RemapToLogicalOrderFunctor {
 public:
@@ -36,6 +36,6 @@ private:
 
 
 
-}// namespace imaging
+}// namespace arrus::imaging
 
 #endif//CPP_EXAMPLE_IMAGING_KERNELS_REMAPTOLOGICALORDER_H

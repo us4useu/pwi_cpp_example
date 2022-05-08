@@ -1,6 +1,6 @@
 #include "BandpassFilter.h"
 
-namespace imaging {
+namespace arrus::imaging {
 
 BandpassFilterKernel::BandpassFilterKernel(KernelConstructionContext &ctx) : Kernel(ctx) {
     auto &input = ctx.getInput();

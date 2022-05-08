@@ -3,7 +3,7 @@
 
 #include "imaging/Operation.h"
 
-namespace imaging {
+namespace arrus::imaging {
 
 /**
  * Digital down conversion: demodulate, decimate by a given factor.

@@ -8,6 +8,8 @@
 #include "imaging/ProbeModelExt.h"
 #include "imaging/Metadata.h"
 
+namespace arrus::imaging {
+
 class PwiSequence {
 public:
     using Aperture = imaging::ProbeModelExt::Aperture;
@@ -46,5 +48,7 @@ private:
  */
 std::tuple<std::shared_ptr<::arrus::framework::Buffer>, imaging::NdArrayDef, std::shared_ptr<::imaging::Metadata>>
 upload(::arrus::session::Session *session, const PwiSequence &seq, const std::vector<::imaging::ProbeModelExt> &probes);
+
+}
 
 #endif//CPP_EXAMPLE_PWI_SEQUENCE_H

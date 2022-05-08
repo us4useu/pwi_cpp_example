@@ -21,7 +21,7 @@
 
 #include "gui.h"
 #include "menu.h"
-#include "pwi.h"
+#include "imaging/pwi.h"
 
 using namespace ::cv;
 using namespace ::arrus::session;

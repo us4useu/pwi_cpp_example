@@ -6,7 +6,7 @@
 #include "imaging/ops/ToBMode.h"
 #include "imaging/KernelRegistry.h"
 
-namespace imaging {
+namespace arrus::imaging {
 
 class ToBModeFunctor {
 public:

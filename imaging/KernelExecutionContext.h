@@ -1,7 +1,7 @@
 #ifndef PWI_CPP_EXAMPLE_IMAGING_EXECUTIONCONTEXT_H
 #define PWI_CPP_EXAMPLE_IMAGING_EXECUTIONCONTEXT_H
 
-namespace imaging {
+namespace arrus::imaging {
 
 class KernelExecutionContext {
 public:

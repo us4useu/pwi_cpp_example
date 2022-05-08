@@ -3,7 +3,7 @@
 
 #include "imaging/Operation.h"
 
-namespace imaging {
+namespace arrus::imaging {
 
 /**
  * Beamforms input RF data to a sequence of high-resolution images

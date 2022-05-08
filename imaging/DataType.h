@@ -1,7 +1,7 @@
 #ifndef CPP_EXAMPLE_DATATYPE_H
 #define CPP_EXAMPLE_DATATYPE_H
 
-namespace imaging {
+namespace arrus::imaging {
 
 enum class DataType {
     UINT8,

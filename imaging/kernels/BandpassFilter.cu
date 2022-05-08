@@ -1,6 +1,6 @@
 #include "BandpassFilter.h"
 
-namespace imaging {
+namespace arrus::imaging {
 
 #define MAX_FIR_SIZE 512
 
@@ -107,4 +107,4 @@ void BandpassFilterFunctor::operator()(NdArray &output, const NdArray &input,
 //    unsigned nSamples{0};
 //    unsigned nCoefficients{0};
 //};
-}// namespace imaging
+}// namespace arrus::imaging

@@ -7,7 +7,7 @@
 #include "imaging/Kernel.h"
 #include "imaging/Operation.h"
 
-namespace imaging {
+namespace arrus::imaging {
 class KernelRegistry {
 public:
     using KernelFactory = std::function<Kernel::Handle(KernelConstructionContext &)>;
@@ -56,6 +56,6 @@ namespace {                                        \
     static RegisterKernelOpInitializer<KernelClass> opInitializer{opClassId}; \
 }
 
-}// namespace imaging
+}// namespace arrus::imaging
 
 #endif//CPP_EXAMPLE_IMAGING_KERNELREGISTRY_H

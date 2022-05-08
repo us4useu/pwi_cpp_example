@@ -3,6 +3,8 @@
 
 #include "ReconstructHri.h"
 
+#define _USE_MATH_DEFINES // TODO MSVC specific
+#include <math.h>
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
 

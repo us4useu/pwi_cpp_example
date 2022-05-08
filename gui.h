@@ -26,7 +26,7 @@ public:
             ::cv::imshow("Display2D", real);
         }
         else {
-            // ::cv::transpose(mat, mat);
+            ::cv::transpose(mat, mat);
             ::cv::imshow("Display2D", mat);
         }
         // Refresh the window and check if user pressed 'q'.

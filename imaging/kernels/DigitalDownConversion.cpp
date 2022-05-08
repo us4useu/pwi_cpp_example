@@ -1,6 +1,9 @@
 #include "DigitalDownConversion.h"
 #include <arrus/core/api/arrus.h>
 
+#define _USE_MATH_DEFINES // TODO MSVC specific
+#include <math.h>
+
 namespace arrus_example_imaging {
 
 DigitalDownConversionKernel::DigitalDownConversionKernel(KernelConstructionContext &ctx) : Kernel(ctx) {

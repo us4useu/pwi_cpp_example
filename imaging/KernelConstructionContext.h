@@ -4,13 +4,16 @@
 #include <utility>
 
 #include "NdArray.h"
+#include "imaging/Operation.h"
 #include "imaging/Metadata.h"
 
 namespace imaging {
 class KernelConstructionContext {
 public:
-    KernelConstructionContext(NdArrayDef input, NdArrayDef output, std::shared_ptr<Metadata> inputMetadata)
-        : input(std::move(input)), output(std::move(output)), inputMetadata(std::move(inputMetadata)) {
+    KernelConstructionContext(NdArrayDef input, NdArrayDef output, std::shared_ptr<Metadata> inputMetadata,
+                              OpParameters parameters)
+        : input(std::move(input)), output(std::move(output)), inputMetadata(std::move(inputMetadata)),
+          parameters(std::move(parameters)){
 
         // Start with the input metadata.
         outputMetadataBuilder = MetadataBuilder{inputMetadata};
@@ -19,6 +22,8 @@ public:
     const NdArrayDef &getInput() const { return input; }
 
     const NdArrayDef &getOutput() const { return output; }
+
+    const NdArray &getParamArray(const std::string &key) const {return parameters.getArray(key);}
 
     void setOutput(const NdArrayDef &value) {this->output = value; }
 
@@ -30,6 +35,7 @@ private:
     NdArrayDef input, output;
     std::shared_ptr<Metadata> inputMetadata;
     MetadataBuilder outputMetadataBuilder;
+    OpParameters parameters;
 };
 }// namespace imaging
 #endif//CPP_EXAMPLE_KERNELS_KERNELINITCONTEXT_H

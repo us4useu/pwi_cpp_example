@@ -14,12 +14,12 @@ class OpParameters {
 public:
     using Container = std::unordered_map<std::string, NdArray>;
 
-    OpParameters() {}
+    OpParameters() = default;
 
     explicit OpParameters(Container params)
         : params(std::move(params)) {}
 
-    NdArray& get(const std::string &key) {
+    const NdArray &getArray(const std::string &key) const {
         return params.at(key);
     }
 private:
@@ -31,12 +31,14 @@ public:
     using OpClassId = std::string;
     using OpId = std::string;
 
-    Operation() {}
+    Operation() = default;
 
-    Operation(OpClassId classId, const OpParameters &params)
-        : classId(std::move(classId)), params(params) {}
+    Operation(OpClassId classId, OpParameters params)
+        : classId(std::move(classId)), params(std::move(params)) {}
 
     OpClassId getOpClassId() const { return classId; }
+
+    const OpParameters &getParams() const { return params; }
 
 private:
     OpClassId classId;
@@ -53,8 +55,8 @@ public:
         return *this;
     }
 
-    OperationBuilder& addParam(const std::string& key, const NdArray arr) {
-//        this->params.insert(key, std::move(arr));
+    OperationBuilder& addParam(const std::string& key, const NdArray &arr) {
+        this->params.insert({key, arr});
         return *this;
     }
 

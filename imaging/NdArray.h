@@ -7,7 +7,7 @@
 #include <vector>
 #include <limits>
 
-#include "CudaUtils.cu"
+#include "CudaUtils.cuh"
 #include "DataType.h"
 
 namespace imaging {
@@ -110,7 +110,7 @@ public:
     NdArray() = default;
 
     NdArray(const NdArrayDef &definition, bool isGpu)
-        : ptr(nullptr), shape(definition.getShape()), dataType(definition.getType()), isGpu(isGpu) {
+        : ptr(nullptr), shape(definition.getShape()), dataType(definition.getType()), gpu(isGpu) {
         if (shape.empty()) {
             // empty array shape (0)
             return;
@@ -121,13 +121,13 @@ public:
 
 
     NdArray(void *ptr, const NdArrayDef& definition, bool isGpu)
-        : ptr((uint8_t *) ptr), shape(definition.getShape()), dataType(definition.getType()), isGpu(isGpu) {
+        : ptr((uint8_t *) ptr), shape(definition.getShape()), dataType(definition.getType()), gpu(isGpu) {
         nBytes = calculateSize(shape, dataType);
         isExternal = true;
     }
 
     NdArray(NdArray &&array) noexcept
-        : ptr(array.ptr), shape(std::move(array.shape)), dataType(array.dataType), isGpu(array.isGpu),
+        : ptr(array.ptr), shape(std::move(array.shape)), dataType(array.dataType), gpu(array.gpu),
           nBytes(array.nBytes), isExternal(array.isExternal) {
         array.ptr = nullptr;
         array.nBytes = 0;
@@ -145,7 +145,7 @@ public:
 
             shape = std::move(array.shape);
             dataType = array.dataType;
-            isGpu = array.isGpu;
+            gpu = array.gpu;
             isExternal = array.isExternal;
         }
         return *this;
@@ -155,11 +155,11 @@ public:
         shape = array.shape;
         dataType = array.dataType;
         nBytes = array.nBytes;
-        isGpu = array.isGpu;
+        gpu = array.gpu;
         isExternal = array.isExternal;
         if(! isExternal) {
-            allocateMemory(&(this->ptr), nBytes, isGpu);
-            NdArray::memcpy(this->ptr, array.ptr, nBytes, isGpu);
+            allocateMemory(&(this->ptr), nBytes, gpu);
+            NdArray::memcpy(this->ptr, array.ptr, nBytes, gpu);
         }
         else {
             ptr = array.ptr;
@@ -172,11 +172,11 @@ public:
             shape = array.shape;
             dataType = array.dataType;
             nBytes = array.nBytes;
-            isGpu = array.isGpu;
+            gpu = array.gpu;
             isExternal = array.isExternal;
             if(! isExternal) {
-                allocateMemory(&(this->ptr), nBytes, isGpu);
-                NdArray::memcpy(this->ptr, array.ptr, nBytes, isGpu);
+                allocateMemory(&(this->ptr), nBytes, gpu);
+                NdArray::memcpy(this->ptr, array.ptr, nBytes, gpu);
             }
             else {
                 ptr = array.ptr;
@@ -199,7 +199,7 @@ public:
 
     size_t getNBytes() const { return nBytes; }
 
-    bool IsGpu() const { return isGpu; }
+    bool isGpu() const { return gpu; }
 
     void freeMemory() {
         if (ptr == nullptr) {
@@ -209,7 +209,7 @@ public:
             // external data (views) are not managed by this class
             return;
         }
-        if (isGpu) {
+        if (gpu) {
             CUDA_ASSERT_NO_THROW(cudaFree(ptr));
         } else {
             CUDA_ASSERT_NO_THROW(cudaFreeHost(ptr));
@@ -217,7 +217,7 @@ public:
     }
 
     NdArray createView() {
-        return NdArray{ptr, NdArrayDef{shape, dataType}, isGpu};
+        return NdArray{ptr, NdArrayDef{shape, dataType}, gpu};
     }
 
     bool isView() const {
@@ -233,7 +233,7 @@ public:
     NdArray operator*(const float value) const {
         ASSERT_NOT_GPU();
         NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
-        NdArray result{resultDef, this->isGpu}; // New, complete array.
+        NdArray result{resultDef, this->gpu}; // New, complete array.
         auto nElements = result.getNumberOfElements();
         auto* outputContainer = (float*)result.ptr;
 
@@ -252,7 +252,7 @@ public:
     NdArray operator/(const float value) const {
         ASSERT_NOT_GPU();
         NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
-        NdArray result{resultDef, this->isGpu}; // New, complete array.
+        NdArray result{resultDef, this->gpu}; // New, complete array.
         auto nElements = result.getNumberOfElements();
         auto* outputContainer = (float*)result.ptr;
 
@@ -277,7 +277,7 @@ public:
             throw std::runtime_error("Both NdArray should have the same size while adding them together");
         }
         NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
-        NdArray result{resultDef, this->isGpu}; // New, complete array.
+        NdArray result{resultDef, this->gpu}; // New, complete array.
         auto* outputContainer = (float*)result.ptr;
 
         for(size_t i = 0; i < nElements; ++i) {
@@ -297,7 +297,7 @@ public:
     NdArray operator-() const {
         ASSERT_NOT_GPU();
         NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
-        NdArray result{resultDef, this->isGpu};
+        NdArray result{resultDef, this->gpu};
         auto* outputContainer = (float*)result.ptr;
         auto nElements = this->getNumberOfElements();
 
@@ -318,7 +318,7 @@ public:
     NdArray sin() const {
         ASSERT_NOT_GPU();
         NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
-        NdArray result{resultDef, this->isGpu};
+        NdArray result{resultDef, this->gpu};
         auto* outputContainer = (float*)result.ptr;
         auto nElements = this->getNumberOfElements();
 
@@ -339,7 +339,7 @@ public:
     NdArray cos() const {
         ASSERT_NOT_GPU();
         NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
-        NdArray result{resultDef, this->isGpu};
+        NdArray result{resultDef, this->gpu};
         auto* outputContainer = (float*)result.ptr;
         auto nElements = this->getNumberOfElements();
 
@@ -372,7 +372,7 @@ public:
     NdArray operator-(const float value) const {
         ASSERT_NOT_GPU();
         NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
-        NdArray result{resultDef, this->isGpu};
+        NdArray result{resultDef, this->gpu};
         auto* outputContainer = (float*)result.ptr;
         auto nElements = this->getNumberOfElements();
 
@@ -530,7 +530,7 @@ private:
     }
 
     void assertNotGpu(int line) const {
-        if(isGpu) {
+        if(gpu) {
             throw std::runtime_error(
                 "NdArray, line " + std::to_string(line) + ":" +
                 "Operation is not supported for GPU arrays.");
@@ -541,7 +541,7 @@ private:
     DataShape shape{};
     size_t nBytes{0};
     DataType dataType{DataType::UINT8};
-    bool isGpu{false};
+    bool gpu{false};
     bool isExternal{false};
 };
 }// namespace imaging

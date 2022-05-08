@@ -1,7 +1,7 @@
 #ifndef CPP_EXAMPLE_KERNELS_REMAPTOLOGICALORDER_CUH
 #define CPP_EXAMPLE_KERNELS_REMAPTOLOGICALORDER_CUH
 
-#include "imaging/CudaUtils.cu"
+#include "imaging/CudaUtils.cuh"
 #include "imaging/kernels/RemapToLogicalOrder.h"
 
 namespace imaging {
@@ -27,7 +27,7 @@ namespace imaging {
  * @param nSamples number of samples per frame (output shape)
  * @param nChannels number of channels per frame (output shape)
  */
-__global__ void arrusRemapGpu(short *out, const short *in, const short *fcmFrames, const char *fcmChannels,
+__global__ void gpuUs4rRemap(short *out, const short *in, const short *fcmFrames, const char *fcmChannels,
                               const unsigned char *fcmUs4oems, const unsigned int *frameOffsets,
                               const unsigned int *nFramesUs4OEM, const unsigned nSequences, const unsigned nFrames,
                               const unsigned nSamples, const unsigned nChannels) {
@@ -78,11 +78,10 @@ void RemapToLogicalOrderFunctor::operator()(NdArray &output, const NdArray &inpu
                                             cudaStream_t stream) {
     dim3 block(BLOCK_TILE_DIM, BLOCK_TILE_DIM);
     dim3 grid((nChannels - 1) / block.x + 1, (nSamples - 1) / block.y + 1, nFrames*nSequences);
-    arrusRemapGpu<<<grid, block, 0, stream>>>(output.getPtr<int16_t>(), input.getConstPtr<int16_t>(),
-        fcmFrames.getConstPtr<int16_t>(), fcmChannels.getConstPtr<char>(), fcmUs4oems.getConstPtr<uint8_t>(),
-            frameOffsets.getConstPtr<uint32_t>(), nFramesUs4OEM.getConstPtr<uint32_t>(),
-             nSequences, nFrames, nSamples, nChannels
-    );
+    gpuUs4rRemap<<<grid, block, 0, stream>>>(
+        output.getPtr<int16_t>(), input.getConstPtr<int16_t>(), fcmFrames.getConstPtr<int16_t>(),
+        fcmChannels.getConstPtr<char>(), fcmUs4oems.getConstPtr<uint8_t>(), frameOffsets.getConstPtr<uint32_t>(),
+        nFramesUs4OEM.getConstPtr<uint32_t>(), nSequences, nFrames, nSamples, nChannels);
     CUDA_ASSERT(cudaGetLastError());
 }
 

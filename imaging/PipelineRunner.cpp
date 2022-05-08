@@ -6,8 +6,8 @@
 #include "Metadata.h"
 #include "NdArray.h"
 #include "PipelineRunner.h"
-#include "pwi.h"
 #include "imaging/KernelRegistry.h"
+#include "pwi.h"
 
 namespace imaging {
 
@@ -27,16 +27,15 @@ void PipelineRunner::prepare() {
     std::shared_ptr<Metadata> currentMetadata = inputMetadata;
     NdArray currentInputArray = inputGpu.createView();
 
-
-    for (auto &op: pipeline.getOps()) {
-        // Create Construction context: get the current NdArrayDef (start with inputDef),
-        KernelConstructionContext constructionContext{currentInputDef, currentInputDef, inputMetadata};
+    for (auto &op : pipeline.getOps()) {
+        // Create Construction context: getArray the current NdArrayDef (start with inputDef),
+        KernelConstructionContext constructionContext{currentInputDef, currentInputDef, inputMetadata, op.getParams()};
         // determine kernel, run factory function from Registry
         // Create output array for that kernel, create context for that
         Kernel::Handle kernel = registry.createKernel(op, constructionContext);
         kernels.push_back(std::move(kernel));
         kernelOutputs.emplace_back(constructionContext.getOutput(), true);
-        auto &outputArray = kernelOutputs[kernelOutputs.size()-1];
+        auto &outputArray = kernelOutputs[kernelOutputs.size() - 1];
         kernelExecutionCtx.emplace_back(currentInputArray, outputArray.createView(), processingStream);
         currentInputDef = constructionContext.getOutput();
         currentMetadata = constructionContext.getOutputMetadataBuilder().buildSharedPtr();

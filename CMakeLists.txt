@@ -12,21 +12,14 @@ set(ARRUS_LIB_PATH /home/pjarosik/lib/local/arrus/develop/lib64)
 
 set(GPU_SRC
     # Imaging
-#    imaging/kernels/Decimation.cuh
-#    imaging/kernels/EnvelopeDetection.cuh
-#    imaging/kernels/FirFilterSingleton.cuh
-#    imaging/kernels/Kernel.cuh
-#    imaging/kernels/KernelConstructionContext.h
-#    imaging/kernels/KernelInitResult.h
-#    imaging/kernels/LpFilterSingleton.cuh
-#    imaging/kernels/QuadratureDemodulation.cuh
-#    imaging/kernels/ReconstructLriPwi.cuh
-#    imaging/kernels/RemapToLogicalOrder.cuh
-#    imaging/kernels/Sum.h
-#    imaging/kernels/ToBmode.cuh
-#    imaging/kernels/Transpose.cuh
-    imaging/CudaUtils.cu
+    imaging/CudaUtils.cuh
     imaging/kernels/RemapToLogicalOrder.cu
+    imaging/kernels/Transpose.cu
+    imaging/kernels/BandpassFilter.cu
+#    imaging/kernels/DigitalDownConversion.cu
+#    imaging/kernels/ReconstructLriPwi.cu
+#    imaging/kernels/EnvelopeDetection.cu
+#    imaging/kernels/ToBmode.cu
 )
 
 add_library(pwi_example_gpu ${GPU_SRC})
@@ -67,8 +60,30 @@ set(MAIN_SRC
     imaging/ops/Pipeline.h
 
     imaging/ops/RemapToLogicalOrder.h
+    imaging/ops/Transpose.h
+    imaging/ops/BandpassFilter.h
+#    imaging/ops/DigitalDownConversion.h
+#    imaging/ops/ReconstructHri.h
+#    imaging/ops/EnvelopeDetection.h
+#    imaging/ops/ToBmode.h
+
     imaging/kernels/RemapToLogicalOrder.cpp
+    imaging/kernels/Transpose.cpp
+    imaging/kernels/BandpassFilter.cpp
+#    imaging/kernels/DigitalDownConversion.cpp
+#    imaging/kernels/ReconstructHri.cpp
+#    imaging/kernels/EnvelopeDetection.cpp
+#    imaging/kernels/ToBmode.cpp
+
+    imaging/kernels/RemapToLogicalOrder.h
+    imaging/kernels/Transpose.h
+    imaging/kernels/BandpassFilter.h
+#    imaging/kernels/DigitalDownConversion.h
+#    imaging/kernels/ReconstructHri.h
+#    imaging/kernels/EnvelopeDetection.h
+#    imaging/kernels/ToBmode.h
 )
+
 
 
 

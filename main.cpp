@@ -57,7 +57,7 @@ void initializeDisplay(const std::vector<unsigned int> &inputShape, imaging::Dat
 int main() noexcept {
     try {
         // The below line register a custom logger in arrus package.
-        // In order to get output for log messages with level < INFO, it is
+        // In order to getArray output for log messages with level < INFO, it is
         // necessary to register a custom logger factory. Please refer to the
         // MyCustomLoggerFactory implementation for more details.
         //

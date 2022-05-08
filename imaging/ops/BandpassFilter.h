@@ -10,10 +10,12 @@ namespace imaging {
  */
 class BandpassFilter {
 public:
-    BandpassFilter(const NdArray &coeffs) { op = OperationBuilder{}
-                                .setClassId(OPERATION_CLASS_ID(BandpassFilter))
-                                .addParam("coefficients", coeffs)
-                                .build(); }
+    explicit BandpassFilter(const NdArray &coeffs) {
+        op = OperationBuilder{}
+                 .setClassId(OPERATION_CLASS_ID(BandpassFilter))
+                 .addParam("coefficients", coeffs)
+                 .build();
+    }
 
     operator Operation() { return op; }
 

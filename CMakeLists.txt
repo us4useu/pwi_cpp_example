@@ -6,9 +6,9 @@ project(cpp_example LANGUAGES CXX CUDA)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_BINARY_DIR}")
 find_package(OpenCV REQUIRED)
 # TODO change the below path appropriately.
-set(ARRUS_INCLUDE_PATH /home/pjarosik/lib/local/arrus/develop/include)
+set(ARRUS_INCLUDE_PATH /home/pjarosik/lib/arrus-releases/develop/include)
 # TODO change the below path appropriately.
-set(ARRUS_LIB_PATH /home/pjarosik/lib/local/arrus/develop/lib64)
+set(ARRUS_LIB_PATH /home/pjarosik/lib/arrus-releases/develop/lib64)
 
 set(GPU_SRC
     # Imaging
@@ -35,7 +35,6 @@ set(MAIN_SRC
     gui.h
     pwi.h
     pwi.cpp
-    menu.h
     menu.cpp
     common.h
     common.cpp

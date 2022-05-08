@@ -18,7 +18,13 @@ public:
     }
 
     Kernel::Handle createKernel(const Operation &op, KernelConstructionContext &ctx) {
-        return kernels.at(op.getOpClassId())(ctx);
+        KernelFactory func;
+        try {
+            func = kernels.at(op.getOpClassId());
+        } catch (const std::out_of_range &e) {
+            throw std::out_of_range("There is no kernel registered for operation: " + op.getOpClassId());
+        }
+        return func(ctx);
     }
 
     void registerKernelOpFactory(const Operation::OpClassId &classId, KernelFactory factory) {

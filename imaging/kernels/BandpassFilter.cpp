@@ -26,7 +26,9 @@ BandpassFilterKernel::BandpassFilterKernel(KernelConstructionContext &ctx) : Ker
                                  + std::to_string(coefficients.getShape().size())
                                  + ").");
     }
+    impl = BandpassFilterFunctor{coefficients};
     nCoefficients = coefficients.getNumberOfElements();
+    ctx.setOutput(NdArrayDef{inputShape, DataType::FLOAT32});
 }
 
 void BandpassFilterKernel::process(KernelExecutionContext &ctx) {
@@ -34,5 +36,7 @@ void BandpassFilterKernel::process(KernelExecutionContext &ctx) {
          totalNSamples, nCoefficients, nSamples,
          ctx.getStream());
 }
+
+REGISTER_KERNEL_OP(OPERATION_CLASS_ID(BandpassFilter), BandpassFilterKernel)
 
 }

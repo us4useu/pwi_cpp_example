@@ -12,8 +12,12 @@
 #include "logging/MyCustomLoggerFactory.h"
 #include "imaging/PipelineRunner.h"
 #include "imaging/ops/Pipeline.h"
-#include "imaging/ops/RemapToLogicalOrder.h"
 #include "imaging/ProbeModelExt.h"
+
+#include "imaging/ops/RemapToLogicalOrder.h"
+#include "imaging/ops/Transpose.h"
+#include "imaging/ops/BandpassFilter.h"
+
 #include "gui.h"
 #include "menu.h"
 #include "pwi.h"
@@ -35,14 +39,6 @@ constexpr float X_PIX_L = -19.0e-3f, X_PIX_R = 19.0e-3f, X_PIX_STEP = 0.1e-3;
 // grid OZ coordinates
 constexpr float Z_PIX_L = 5e-3f, Z_PIX_R = 42.5e-3f, Z_PIX_STEP = 0.1e-3;
 
-// Hanning window, band (0.5, 1.5)*TX_FREQUENCY, order 64
-const std::vector<float> BANDPASS_FILTER_COEFFS
-    // taps for Butterworth filter, 0.5, 1.5 * 6 MHz, order 2
-    {0.05892954, 0., -0.11785907, 0., 0.05892954};
-
-
-// Low-pass CIC filter cooefficients.
-const std::vector<float> LOWPASS_FILTER_COEFFS{1, 2, 3, 4, 3, 2, 1};
 
 void initializeDisplay(const std::vector<unsigned int> &inputShape, imaging::DataType type) {
     if(inputShape.size() < 2) {
@@ -87,7 +83,7 @@ int main() noexcept {
 //            columnArray.getFullAperture()
         };
         std::vector<float> txAngles = {
-            0, -10, 10 // RR
+            0, // -10, 10 // RR
 //            0, // CC
         }; // [deg]
 
@@ -121,14 +117,18 @@ int main() noexcept {
         NdArrayDef outputDef = std::get<1>(result);
         auto metadata = std::get<2>(result);
 
-        // - RF data description - currently contains only information about frame channel mapping.
-
+        // taps for Butterworth filter, 0.5, 1.5 * 6 MHz, order 2
+        const std::vector<float> BANDPASS_FILTER_COEFFS = {0.05892954, 0., -0.11785907, 0., 0.05892954};
+        // Low-pass CIC filter coefficients (DDC).
+        const std::vector<float> LOWPASS_FILTER_COEFFS = {1, 2, 3, 4, 3, 2, 1};
         PipelineRunner runner {
             outputDef,
             metadata,
             // Processing steps to be performed on GPU.
             Pipeline{{
                 RemapToLogicalOrder{},
+                Transpose{},
+                BandpassFilter(::imaging::NdArray::asarray(BANDPASS_FILTER_COEFFS))
             }}
         };
 

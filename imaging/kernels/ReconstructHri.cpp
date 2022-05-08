@@ -1,5 +1,7 @@
 #include "ReconstructHri.h"
 
+#include "imaging/pwi.h"
+
 namespace arrus::imaging {
 
 ReconstructHriKernel::ReconstructHriKernel(KernelConstructionContext &ctx) : Kernel(ctx) {

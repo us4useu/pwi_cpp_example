@@ -5,7 +5,6 @@
 #include "imaging/Operation.h"
 #include "imaging/ops/BandpassFilter.h"
 #include "imaging/KernelRegistry.h"
-#include "imaging/pwi.h"
 
 namespace arrus::imaging {
 

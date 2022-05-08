@@ -7,6 +7,6 @@
 /**
  * Runs main menu loop (asks user for input, applies new settings, etc.).
  */
-void runMainMenu(::arrus::devices::Us4R* us4r, const PwiSequence &seq);
+void runMainMenu(::arrus::devices::Us4R* us4r, const ::arrus::imaging::PwiSequence &seq);
 
 #endif //CPP_EXAMPLE_MENU_H

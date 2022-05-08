@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "arrus/core/api/arrus.h"
+#include <arrus/core/api/arrus.h>
 #include "imaging/ProbeModelExt.h"
 #include "imaging/Metadata.h"
 
@@ -46,8 +46,8 @@ private:
 /**
  * Uploads a given PWI sequence on the devices in the session.
  */
-std::tuple<std::shared_ptr<::arrus::framework::Buffer>, imaging::NdArrayDef, std::shared_ptr<::imaging::Metadata>>
-upload(::arrus::session::Session *session, const PwiSequence &seq, const std::vector<::imaging::ProbeModelExt> &probes);
+std::tuple<std::shared_ptr<::arrus::framework::Buffer>, imaging::NdArrayDef, std::shared_ptr<Metadata>>
+upload(::arrus::session::Session *session, const PwiSequence &seq, const std::vector<ProbeModelExt> &probes);
 
 }
 

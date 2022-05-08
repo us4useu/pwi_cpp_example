@@ -33,7 +33,7 @@ __global__ void iqRaw2Hri(float2 *iqLri, const float2 *iqRaw, const int nElem, c
     float interpWgh;
     float txDist, rxDist, rxTang, txApod, rxApod, time, iSamp;
     float modSin, modCos, pixWgh = 0.0f;
-    const float omega = 2 * CUDART_PI_F * fn;
+    const float omega = 2 * M_PI * fn;
     const float sosInv = 1 / sos;
     const float nSigma = 3;// number of sigmas in half of the apodization Gaussian curve
     const float twoSigSqrInv = nSigma * nSigma * 0.5f;
@@ -121,12 +121,12 @@ __global__ void iqRaw2Hri(float2 *iqLri, const float2 *iqRaw, const int nElem, c
                 if (iSamp < 0.0f || iSamp >= static_cast<float>(nSamp - 1)) {
                     continue;
                 }
-                offset = sequenceOffset + iRx * nSamp;
+                offset = txOffset + iRx * nSamp;
                 interpWgh = modff(iSamp, &iSamp);
                 int intSamp = int(iSamp);
 
                 __sincosf(omega * time, &modSin, &modCos);
-                complex<float> modFactor = complex<float>(modCos, modSin);
+                modFactor = complex<float>(modCos, modSin);
 
                 aRaw = iqRaw[offset + intSamp];
                 bRaw = iqRaw[offset + intSamp + 1];
@@ -153,7 +153,7 @@ ReconstructHriFunctor::ReconstructHriFunctor(const NdArray &zElemPos, const NdAr
         cudaMemcpyToSymbol(zElemConst, zElemPos.getConstPtr<float>(), zElemPos.getNBytes(), 0, cudaMemcpyHostToDevice));
     CUDA_ASSERT(
         cudaMemcpyToSymbol(xElemConst, xElemPos.getConstPtr<float>(), xElemPos.getNBytes(), 0, cudaMemcpyHostToDevice));
-    CUDA_ASSERT(cudaMemcpyToSymbol(tangElemConst, elementTang.getConstPtr<float>(), tangElemConst.getNBytes(), 0,
+    CUDA_ASSERT(cudaMemcpyToSymbol(tangElemConst, elementTang.getConstPtr<float>(), elementTang.getNBytes(), 0,
                                    cudaMemcpyHostToDevice));
 }
 

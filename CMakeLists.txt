@@ -6,9 +6,9 @@ project(cpp_example LANGUAGES CXX CUDA)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_BINARY_DIR}")
 find_package(OpenCV REQUIRED)
 # TODO change the below path appropriately.
-set(ARRUS_INCLUDE_PATH /home/pjarosik/lib/local/arrus/develop/include)
+set(ARRUS_INCLUDE_PATH "C:/Users/Public/arrus-releases/arrus-0.7.0-dev20220421-win64-release/include")
 # TODO change the below path appropriately.
-set(ARRUS_LIB_PATH /home/pjarosik/lib/local/arrus/develop/lib64)
+set(ARRUS_LIB_PATH "C:/Users/Public/arrus-releases/arrus-0.7.0-dev20220421-win64-release/lib64")
 
 set(GPU_SRC
     # Imaging
@@ -31,7 +31,6 @@ set_target_properties(pwi_example_gpu PROPERTIES CUDA_ARCHITECTURES 52)
 # Now, all the components should be C++17 at least.
 set(CMAKE_CXX_STANDARD 17)
 set(MAIN_SRC
-    main.cpp
     gui.h
     imaging/pwi.h
     imaging/pwi.cpp
@@ -83,10 +82,16 @@ set(MAIN_SRC
     imaging/kernels/ToBmode.h
 )
 
+# RF data example.
+add_executable(rf_example rf_example.cpp ${MAIN_SRC})
+target_include_directories(rf_example PRIVATE ${ARRUS_INCLUDE_PATH} ${CMAKE_SOURCE_DIR})
+target_link_directories(rf_example PRIVATE ${ARRUS_LIB_PATH})
+target_link_libraries(rf_example PRIVATE pwi_example_gpu opencv::opencv arrus-core)
 
-add_executable(pwi_example ${MAIN_SRC})
-target_include_directories(pwi_example PRIVATE ${ARRUS_INCLUDE_PATH} ${CMAKE_SOURCE_DIR})
-target_link_directories(pwi_example PRIVATE ${ARRUS_LIB_PATH})
-target_link_libraries(pwi_example PRIVATE pwi_example_gpu opencv::opencv arrus-core)
+# BMode data example.
+add_executable(bmode_example bmode_example.cpp ${MAIN_SRC})
+target_include_directories(bmode_example PRIVATE ${ARRUS_INCLUDE_PATH} ${CMAKE_SOURCE_DIR})
+target_link_directories(bmode_example PRIVATE ${ARRUS_LIB_PATH})
+target_link_libraries(bmode_example PRIVATE pwi_example_gpu opencv::opencv arrus-core)
 
 

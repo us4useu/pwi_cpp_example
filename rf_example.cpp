@@ -60,11 +60,11 @@ int main() noexcept {
         // that uses ARRUS into try ..catch clauses.
         ::arrus::setLoggerFactory(std::make_shared<MyCustomLoggerFactory>(::arrus::LogSeverity::INFO));
 
-        auto session = ::arrus::session::createSession("/home/pjarosik/us4r.prototxt");
+        auto session = ::arrus::session::createSession("C:/Users/Public/us4r.prototxt");
         auto us4r = (::arrus::devices::Us4R *) session->getDevice("/Us4R:0");
 
         auto fullArray = us4r->getProbe(0)->getModel();
-        ProbeModelExt columnArray{0, fullArray, 0, 128, 0.245e-3f, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OX};
+        ProbeModelExt columnArray{0, fullArray, 0, 192, 0.245e-3f, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OX};
 //        ProbeModelExt rowArray{1, fullArray, 128, 256, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OY};
         std::vector<ProbeModelExt> arrayModels = {columnArray, };// rowArray};
 
@@ -102,7 +102,7 @@ int main() noexcept {
             // If the total PRI for a given sequence is smaller than SRI - the last TX/RX
             // pri will be increased by SRI-sum(PRI)
             50e-3,    // sequence repetition interval (an inverse of the actual b-mode frame rate) [s]
-            {0, 2048+1024},// sample range (start sample, end sample)
+            {256, 1024},// sample range (start sample, end sample)
         };
 
         auto result = upload(session.get(), seq, arrayModels);
@@ -114,13 +114,6 @@ int main() noexcept {
 
         // taps for Butterworth filter, 0.5, 1.5 * 6 MHz, order 2
         const std::vector<float> INITIAL_FILTER_COEFFS = {0.05892954, 0., -0.11785907, 0., 0.05892954};
-        // Low-pass CIC filter coefficients (DDC).
-        const std::vector<float> DDC_FILTER_COEFFS = {1, 2, 3, 4, 3, 2, 1};
-        // grid OZ coordinates
-        constexpr float X_LEFT_BORDER = -19.0e-3f, X_RIGHT_BORDER = 19.0e-3f, X_STEP = 0.1e-3;
-        constexpr float Z_LEFT_BORDER = 5e-3f, Z_RIGHT_BORDER = 42.5e-3f, Z_STEP = 0.1e-3;
-        const std::vector<float> xGrid = arange(X_LEFT_BORDER, X_RIGHT_BORDER, X_STEP);
-        const std::vector<float> zGrid = arange(Z_LEFT_BORDER, Z_RIGHT_BORDER, Z_STEP);
         PipelineRunner runner {
             outputDef,
             metadata,
@@ -129,13 +122,6 @@ int main() noexcept {
                 RemapToLogicalOrder{},
                 Transpose{},
                 BandpassFilter(::arrus_example_imaging::NdArray::asarray(INITIAL_FILTER_COEFFS)),
-                DigitalDownConversion(::arrus_example_imaging::NdArray::asarray(DDC_FILTER_COEFFS),
-                                      ::arrus_example_imaging::NdArray::asarray<unsigned>(4)),
-                ReconstructHri(::arrus_example_imaging::NdArray::asarray(xGrid),
-                               ::arrus_example_imaging::NdArray::asarray(zGrid)),
-                EnvelopeDetection(),
-                ToBMode(::arrus_example_imaging::NdArray::asarray<float>(0),
-                        ::arrus_example_imaging::NdArray::asarray<float>(100))
             }}
         };
 
@@ -160,6 +146,7 @@ int main() noexcept {
         };
         buffer->registerOnNewDataCallback(callback);
 
+        us4r->setVoltage(5);
         // Start TX/RX sequence.
         session->startScheme();
         runMainMenu(us4r, seq);

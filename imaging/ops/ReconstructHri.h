@@ -11,11 +11,16 @@ namespace imaging {
  * The output images will reconstructed on a given grid of pixels.
  *
  * Currently works only with plane wave data.
- *
  */
 class ReconstructHri {
 public:
-    ReconstructHri() { op = OperationBuilder{}.setClassId(OPERATION_CLASS_ID(ReconstructHri)).build(); }
+    ReconstructHri(const NdArray &xGrid, const NdArray &zGrid) {
+        op = OperationBuilder{}
+                 .setClassId(OPERATION_CLASS_ID(ReconstructHri))
+                 .addParam("xGrid", xGrid)
+                 .addParam("zGrid", zGrid)
+                 .build();
+    }
 
     operator Operation() { return op; }
 

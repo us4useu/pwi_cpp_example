@@ -37,6 +37,18 @@ public:
 
 #define ASSERT_NOT_GPU() assertNotGpu(__LINE__)
 
+    /**
+     * Creates a scalar NdArray.
+     *
+     * @param value value to store in NdArray
+     * @return scalar NdArray
+     */
+    template<typename T>
+    static NdArray asarray(const T value, bool isGpu = false) {
+        std::vector<T> values = {value};
+        return NdArray::asarray(values, isGpu);
+    }
+
     static NdArray asarray(const std::vector<double> &values, bool isGpu = false) {
         NdArrayDef def{{(unsigned)values.size(), }, DataType::FLOAT64};
         return NdArray::asarray(def, values, isGpu);
@@ -85,8 +97,15 @@ public:
         return result;
     }
 
+    template<typename T>
     static NdArray zeros(size_t nElements) {
-        std::vector<float> values(nElements, 0);
+        std::vector<T> values(nElements, 0);
+        return asarray(values);
+    }
+
+    template<typename T>
+    static NdArray vector(size_t nElements, T value) {
+        std::vector<T> values(nElements, value);
         return asarray(values);
     }
 
@@ -245,6 +264,25 @@ public:
     }
 
     /**
+     * Element-wise addition with scalar value.
+     *
+     * @param value value by which this array should multiplied.
+     * @return the result array (currently: new array with data type float32)
+     */
+    NdArray operator+(const float value) const {
+        ASSERT_NOT_GPU();
+        NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
+        NdArray result{resultDef, this->gpu}; // New, complete array.
+        auto nElements = result.getNumberOfElements();
+        auto* outputContainer = (float*)result.ptr;
+
+        for(size_t i = 0; i < nElements; ++i) {
+            outputContainer[i] = get<float>(i) + value;
+        }
+        return result;
+    }
+
+    /**
      * Element-wise division by scalar value.
      *
      * @param value value by which this array should multiplied.
@@ -346,6 +384,27 @@ public:
 
         for(size_t i = 0; i < nElements; ++i) {
             outputContainer[i] = std::cos(this->get<float>(i));
+        }
+        return result;
+    }
+
+    /**
+     * Compute tangent of each element this array.
+     *
+     * Note: currently, the output Array will have float32 data type,
+     * regardless of input data type.
+     *
+     * @return the result array (currently: new array with data type float32)
+     */
+    NdArray tang() const {
+        ASSERT_NOT_GPU();
+        NdArrayDef resultDef {this->getShape(), DataType::FLOAT32};
+        NdArray result{resultDef, this->gpu};
+        auto* outputContainer = (float*)result.ptr;
+        auto nElements = this->getNumberOfElements();
+
+        for(size_t i = 0; i < nElements; ++i) {
+            outputContainer[i] = std::tan(this->get<float>(i));
         }
         return result;
     }
@@ -453,6 +512,15 @@ public:
             ss << get<float>(i) << ", ";
         }
         return ss.str();
+    }
+
+    NdArray toGpu() {
+        if(gpu) {
+            throw std::runtime_error("NdArray already on GPU.");
+        }
+        NdArray result{NdArrayDef{this->shape, this->dataType}, true};
+        memcpy(result.ptr, this->ptr, this->nBytes, cudaMemcpyHostToDevice);
+        return result;
     }
 
 private:

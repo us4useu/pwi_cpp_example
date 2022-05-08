@@ -1,82 +1,39 @@
-#include "../NdArray.h"
-#include "../KernelInitResult.h"
-#include "../KernelConstructionContext.h"
-#include "../Kernel.h"
+#include "DigitalDownConversion.h"
 
 namespace imaging {
 
-__global__ void gpuDecimation(float2 *output, const float2 *input,
-                              const unsigned nSamples,
-                              const unsigned totalNSamples,
-                              const unsigned decimationFactor) {
+// ------------------------------------------ Demodulation.
+__global__ void gpuRfToIq(float2 *output, const float *input, const float sampleCoeff, const unsigned nSamples,
+                          const unsigned totalNSamples) {
     int idx = threadIdx.x + blockDim.x * blockIdx.x;
-
     if (idx >= totalNSamples) {
         return;
     }
-    int decimatedNSamples = (int) ceilf((float) nSamples / decimationFactor);
-    output[idx] = input[
-        (idx / decimatedNSamples) * nSamples // (transmit, channel number)
-        + (idx % decimatedNSamples) * decimationFactor];
+    float rfSample = input[idx];
+    int sampleNumber = idx % nSamples;
+    float cosinus, sinus;
+    __sincosf(sampleCoeff * sampleNumber, &sinus, &cosinus);
+    float2 iq;
+    iq.x = 2.0f * rfSample * cosinus;
+    iq.y = 2.0f * rfSample * sinus;
+    output[idx] = iq;
 }
 
-class Decimation : public Kernel {
-public:
-
-    KernelInitResult prepare(const KernelInitContext &ctx) override {
-        auto &inputShape = ctx.getInputShape();
-        auto inputDtype = ctx.getDataType();
-
-        if (inputShape.size() != 3) {
-            throw std::runtime_error(
-                "Currently decimation works only with 3D arrays");
-        }
-        this->nSamples = inputShape[2];
-        auto outputNSamples = (unsigned) ceilf(
-            (float) nSamples / decimationFactor);
-        this->outputTotalNSamples =
-            inputShape[0] * inputShape[1] * outputNSamples;
-        return KernelInitResult(
-            {inputShape[0], inputShape[1], outputNSamples},
-            inputDtype,
-            ctx.getInputSamplingFrequency() / decimationFactor);
-    }
-
-    void process(NdArray *output,
-                 const NdArray *input,
-                 cudaStream_t &stream) override {
-        dim3 block(512);
-        dim3 grid((outputTotalNSamples + block.x - 1) / block.x);
-        gpuDecimation <<<grid, block, 0, stream >>>(
-            output->getPtr<float2>(), input->getConstPtr<float2>(),
-            nSamples,
-            outputTotalNSamples,
-            decimationFactor);
-        CUDA_ASSERT(cudaGetLastError());
-    }
-
-    Decimation(unsigned decimationFactor) : decimationFactor(
-        decimationFactor) {}
-
-private:
-    unsigned outputTotalNSamples{0};
-    unsigned nSamples{0};
-    unsigned decimationFactor;
-};
+void QuadratureDemodulationFunctor::operator()(NdArray &output, const NdArray &input, const unsigned nSamples,
+                                               const unsigned totalNSamples, const float sampleCoeff,
+                                               cudaStream_t stream) {
+    dim3 filterBlockDim(512);
+    dim3 filterGridDim((totalNSamples + filterBlockDim.x - 1) / filterBlockDim.x);
+    gpuRfToIq<<<filterGridDim, filterBlockDim, 0, stream>>>(output.getPtr<float2>(), input.getConstPtr<float>(),
+                                                            sampleCoeff, nSamples, totalNSamples);
+    CUDA_ASSERT(cudaGetLastError());
 }
 
-#include "../Kernel.h"
-
-namespace imaging {
-
+// ------------------------------------------ Low-pass filter.
 #define MAX_CIC_SIZE 512
-
 __device__ __constant__ float gpuCicCoefficients[MAX_CIC_SIZE];
-
-__global__ void gpuFirLp(
-    float2 *__restrict__ output, const float2 *__restrict__ input,
-    const int nSamples, const int totalNSamples, const int kernelWidth) {
-
+__global__ void gpuFirLp(float2 *__restrict__ output, const float2 *__restrict__ input, const unsigned nSamples,
+                         const unsigned totalNSamples, const unsigned kernelWidth) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     int ch = idx / nSamples;
     int sample = idx % nSamples;
@@ -90,9 +47,8 @@ __global__ void gpuFirLp(
     // the thread group to compute convolution.
     // Thus the below condition localIdx < (blockDim.x + kernelWidth)
     // Cache input.
-    for (int i = sample - kernelWidth / 2 - 1, localIdx = threadIdx.x;
-         localIdx <
-         (kernelWidth + blockDim.x); i += blockDim.x, localIdx += blockDim.x) {
+    for (int i = sample - kernelWidth / 2 - 1, localIdx = threadIdx.x; localIdx < (kernelWidth + blockDim.x);
+         i += blockDim.x, localIdx += blockDim.x) {
         if (i < 0 || i >= nSamples) {
             cachedInputData[localIdx] = make_float2(0.0f, 0.0f);
         } else {
@@ -113,124 +69,44 @@ __global__ void gpuFirLp(
     output[idx] = result;
 }
 
-/**
- * FIR filter. NOTE: there should be only one instance of this kernel in a single
- * imaging pipeline.
- * The constraint on the number of instances is due to the usage of
- * global constant memory to store filter coefficients.
- */
-class LpFilterSingleton : public Kernel {
-public:
-
-    explicit LpFilterSingleton(const std::vector<float> coefficients) {
-        this->nCoefficients = coefficients.size();
-        CUDA_ASSERT(cudaMemcpyToSymbol(
-            gpuCicCoefficients,
-            coefficients.data(),
-            coefficients.size() * sizeof(float),
-            0, cudaMemcpyHostToDevice));
-    }
-
-    KernelInitResult prepare(const KernelInitContext &ctx) override {
-        auto &inputShape = ctx.getInputShape();
-        auto inputDtype = ctx.getDataType();
-
-        if (inputShape.size() != 3) {
-            throw std::runtime_error(
-                "Currently fir filter works only with 3D arrays");
-        }
-        this->totalNSamples = inputShape[0] * inputShape[1] * inputShape[2];
-        this->nSamples = inputShape[2];
-        return KernelInitResult(
-            inputShape, inputDtype, ctx.getInputSamplingFrequency());
-    }
-
-    void process(NdArray *output, const NdArray *input,
-                 cudaStream_t &stream) override {
-        dim3 filterBlockDim(512);
-        dim3 filterGridDim(
-            (this->totalNSamples + filterBlockDim.x - 1) /
-            filterBlockDim.x);
-        unsigned sharedMemSize =
-            (filterBlockDim.x + nCoefficients) * sizeof(float2);
-        gpuFirLp<<<filterGridDim, filterBlockDim, sharedMemSize, stream >>>(
-            output->getPtr<float2>(), input->getConstPtr<float2>(),
-            this->nSamples, this->totalNSamples, this->nCoefficients);
-        CUDA_ASSERT(cudaGetLastError());
-    }
-
-private:
-    unsigned totalNSamples{0};
-    unsigned nSamples{0};
-    unsigned nCoefficients{0};
-};
-
+LowPassFilterFunctor::LowPassFilterFunctor(const NdArray &coeffs) {
+    CUDA_ASSERT(cudaMemcpyToSymbol(gpuCicCoefficients, coeffs.getConstPtr<float>(), coeffs.getNBytes(), 0,
+                                   cudaMemcpyHostToDevice));
 }
 
-#include "../NdArray.h"
-#include "math_constants.h"
+void LowPassFilterFunctor::operator()(NdArray &output, const NdArray &input, unsigned nSamples, unsigned totalNSamples,
+                                      unsigned nCoefficients, cudaStream_t stream) {
+    dim3 filterBlockDim(512);
+    dim3 filterGridDim((totalNSamples + filterBlockDim.x - 1) / filterBlockDim.x);
+    unsigned sharedMemSize = (filterBlockDim.x + nCoefficients) * sizeof(float2);
+    gpuFirLp<<<filterGridDim, filterBlockDim, sharedMemSize, stream>>>(
+        output.getPtr<float2>(), input.getConstPtr<float2>(), nSamples, totalNSamples, nCoefficients);
+    CUDA_ASSERT(cudaGetLastError());
+}
+// ------------------------------------------ Decimation.
 
-namespace imaging {
-
-__global__ void gpuRfToIq(float2 *output, const float *input,
-                          const float sampleCoeff,
-                          const unsigned nSamples,
-                          const unsigned maxThreadId) {
+__global__ void gpuDecimation(float2 *output, const float2 *input, const unsigned nSamples,
+                              const unsigned totalNSamples, const unsigned decimationFactor) {
     int idx = threadIdx.x + blockDim.x * blockIdx.x;
-    if (idx >= maxThreadId) {
+
+    if (idx >= totalNSamples) {
         return;
     }
-    float rfSample = input[idx];
-    int sampleNumber = idx % nSamples;
-    float cosinus, sinus;
-    __sincosf(sampleCoeff * sampleNumber, &sinus, &cosinus);
-    float2 iq;
-    iq.x = 2.0f * rfSample * cosinus;
-    iq.y = 2.0f * rfSample * sinus;
-    output[idx] = iq;
+    // TODO the below could be computed on the kernel initialization
+    int decimatedNSamples = (int) ceilf((float) nSamples / decimationFactor);
+    int lineNr = idx / decimatedNSamples;  // output line number
+    int sampleNr = idx % decimatedNSamples;// output sample number
+    output[idx] = input[lineNr * nSamples + sampleNr * decimationFactor];
 }
 
-class QuadratureDemodulation : public Kernel {
-public:
-    QuadratureDemodulation(float transmitFrequency) :
-                                                      transmitFrequency(transmitFrequency) {}
-
-    KernelInitResult prepare(const KernelInitContext &ctx) override {
-        auto &inputShape = ctx.getInputShape();
-        if (inputShape.size() != 3) {
-            throw std::runtime_error(
-                "Currently demodulation works only with 3D arrays");
-        }
-        auto samplingFrequency = ctx.getSamplingFrequency();
-        this->totalNSamples = inputShape[0] * inputShape[1] * inputShape[2];
-        this->nSamples = inputShape[2];
-        this->sampleCoeff =
-            -2.0f * CUDART_PI_F * transmitFrequency / samplingFrequency;
-        return KernelInitResult(
-            inputShape, NdArray::DataType::COMPLEX64,
-            ctx.getInputSamplingFrequency());
-    }
-
-    void process(NdArray *output, const NdArray *input,
-                 cudaStream_t &stream) override {
-        dim3 filterBlockDim(512);
-        dim3 filterGridDim(
-            (this->totalNSamples + filterBlockDim.x - 1) /
-            filterBlockDim.x);
-        gpuRfToIq<<<filterGridDim, filterBlockDim, 0, stream >>>(
-            output->getPtr<float2>(), input->getConstPtr<float>(),
-            this->sampleCoeff, this->nSamples, this->totalNSamples);
-        CUDA_ASSERT(cudaGetLastError());
-    }
-
-
-private:
-    unsigned totalNSamples{0};
-    unsigned nSamples{0};
-    unsigned nCoefficients{0};
-    float samplingFrequency;
-    float transmitFrequency;
-    float sampleCoeff{0};
-};
-
+void DecimationFunctor::operator()(NdArray &output, const NdArray &input,
+                                   const unsigned totalOutputNSamples, const unsigned nSamples,
+                                   const unsigned decimationFactor,
+                                   cudaStream_t stream) {
+    dim3 block(512);
+    dim3 grid((totalOutputNSamples + block.x - 1) / block.x);
+    gpuDecimation<<<grid, block, 0, stream>>>(output.getPtr<float2>(), input.getConstPtr<float2>(), nSamples,
+                                              totalOutputNSamples, decimationFactor);
+    CUDA_ASSERT(cudaGetLastError());
 }
+}// namespace imaging

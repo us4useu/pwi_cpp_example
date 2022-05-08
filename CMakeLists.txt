@@ -6,9 +6,9 @@ project(cpp_example LANGUAGES CXX CUDA)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_BINARY_DIR}")
 find_package(OpenCV REQUIRED)
 # TODO change the below path appropriately.
-set(ARRUS_INCLUDE_PATH /home/pjarosik/lib/arrus-releases/develop/include)
+set(ARRUS_INCLUDE_PATH /home/pjarosik/lib/local/arrus/develop/include)
 # TODO change the below path appropriately.
-set(ARRUS_LIB_PATH /home/pjarosik/lib/arrus-releases/develop/lib64)
+set(ARRUS_LIB_PATH /home/pjarosik/lib/local/arrus/develop/lib64)
 
 set(GPU_SRC
     # Imaging
@@ -16,10 +16,10 @@ set(GPU_SRC
     imaging/kernels/RemapToLogicalOrder.cu
     imaging/kernels/Transpose.cu
     imaging/kernels/BandpassFilter.cu
-#    imaging/kernels/DigitalDownConversion.cu
-#    imaging/kernels/ReconstructLriPwi.cu
-#    imaging/kernels/EnvelopeDetection.cu
-#    imaging/kernels/ToBmode.cu
+    imaging/kernels/DigitalDownConversion.cu
+    imaging/kernels/ReconstructHri.cu
+    imaging/kernels/EnvelopeDetection.cu
+    imaging/kernels/ToBmode.cu
 )
 
 add_library(pwi_example_gpu ${GPU_SRC})
@@ -61,26 +61,26 @@ set(MAIN_SRC
     imaging/ops/RemapToLogicalOrder.h
     imaging/ops/Transpose.h
     imaging/ops/BandpassFilter.h
-#    imaging/ops/DigitalDownConversion.h
-#    imaging/ops/ReconstructHri.h
-#    imaging/ops/EnvelopeDetection.h
-#    imaging/ops/ToBmode.h
+    imaging/ops/DigitalDownConversion.h
+    imaging/ops/ReconstructHri.h
+    imaging/ops/EnvelopeDetection.h
+    imaging/ops/ToBMode.h
 
     imaging/kernels/RemapToLogicalOrder.cpp
     imaging/kernels/Transpose.cpp
     imaging/kernels/BandpassFilter.cpp
-#    imaging/kernels/DigitalDownConversion.cpp
-#    imaging/kernels/ReconstructHri.cpp
-#    imaging/kernels/EnvelopeDetection.cpp
-#    imaging/kernels/ToBmode.cpp
+    imaging/kernels/DigitalDownConversion.cpp
+    imaging/kernels/ReconstructHri.cpp
+    imaging/kernels/EnvelopeDetection.cpp
+    imaging/kernels/ToBmode.cpp
 
     imaging/kernels/RemapToLogicalOrder.h
     imaging/kernels/Transpose.h
     imaging/kernels/BandpassFilter.h
-#    imaging/kernels/DigitalDownConversion.h
-#    imaging/kernels/ReconstructHri.h
-#    imaging/kernels/EnvelopeDetection.h
-#    imaging/kernels/ToBmode.h
+    imaging/kernels/DigitalDownConversion.h
+    imaging/kernels/ReconstructHri.h
+    imaging/kernels/EnvelopeDetection.h
+    imaging/kernels/ToBmode.h
 )
 
 

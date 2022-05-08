@@ -10,7 +10,13 @@ namespace imaging {
  */
 class DigitalDownConversion {
 public:
-    DigitalDownConversion() { op = OperationBuilder{}.setClassId(OPERATION_CLASS_ID(DigitalDownConversion)).build(); }
+    DigitalDownConversion(const NdArray &coeffs, const NdArray &decimationFactor) {
+        op = OperationBuilder{}
+                 .setClassId(OPERATION_CLASS_ID(DigitalDownConversion))
+                 .addParam("coefficients", coeffs)
+                 .addParam("decimationFactor", decimationFactor)
+                 .build();
+    }
 
     operator Operation() { return op; }
 

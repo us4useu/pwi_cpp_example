@@ -57,8 +57,8 @@ public:
         if(curvatureRadius == std::numeric_limits<float>::infinity()) {
             // Flat array.
             setLateralPosition(elementPosition);
-            this->z = NdArray::zeros(nElements);
-            this->angle = NdArray::zeros(nElements);
+            this->z = NdArray::zeros<float>(nElements);
+            this->angle = NdArray::zeros<float>(nElements);
         }
         else {
             this->angle = elementPosition/curvatureRadius;
@@ -80,6 +80,15 @@ public:
      * Returns position of the center of probe OY
      */
     const NdArray &getElementPositionY() const { return y; }
+
+    const NdArray &getElementPositionLateral() const {
+        if(axis == Axis::OX) {
+            return getElementPositionX();
+        }
+        else {
+            return getElementPositionY();
+        }
+    }
 
     /**
      * Return the position of the center of probe OZ
@@ -109,16 +118,23 @@ public:
         return axis == Axis::OY;
     }
 
+    size_t getNumberOfElements() const {
+        return stopChannel-startChannel;
+    }
+
+    uint16_t getStartChannel() const { return startChannel; }
+    uint16_t getStopChannel() const { return stopChannel; }
+
 private:
 
     void setLateralPosition(const NdArray& position) {
         if(this->axis == Axis::OX) {
             this->x = position;
-            this->y = NdArray::zeros(position.getNumberOfElements());
+            this->y = NdArray::zeros<float>(position.getNumberOfElements());
         }
         else {
             this->y = position;
-            this->x = NdArray::zeros(position.getNumberOfElements());
+            this->x = NdArray::zeros<float>(position.getNumberOfElements());
         }
     }
 

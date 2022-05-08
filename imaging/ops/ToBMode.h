@@ -13,9 +13,15 @@ namespace imaging {
  * Currently works only with plane wave data.
  *
  */
-class ToBmode {
+class ToBMode {
 public:
-    ToBmode() { op = OperationBuilder{}.setClassId(OPERATION_CLASS_ID(ToBmode)).build(); }
+    ToBMode(const NdArray &minDbLimit, const NdArray &maxDbLimit) {
+        op = OperationBuilder{}
+                 .setClassId(OPERATION_CLASS_ID(ToBMode))
+                 .addParam("minDbLimit", minDbLimit)
+                 .addParam("maxDbLimit", maxDbLimit)
+                 .build();
+    }
 
     operator Operation() { return op; }
 

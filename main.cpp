@@ -17,6 +17,7 @@
 #include "imaging/ops/RemapToLogicalOrder.h"
 #include "imaging/ops/Transpose.h"
 #include "imaging/ops/BandpassFilter.h"
+#include "imaging/ops/DigitalDownConversion.h"
 
 #include "gui.h"
 #include "menu.h"
@@ -32,12 +33,8 @@ using namespace ::imaging;
 // An object representing window that displays the data.
 Display2D mainDisplay;
 
-//void initializeDisplay(const std::vector<unsigned int> &inputShape, imaging::DataType type);
-
 // grid OX coordinates
-constexpr float X_PIX_L = -19.0e-3f, X_PIX_R = 19.0e-3f, X_PIX_STEP = 0.1e-3;
-// grid OZ coordinates
-constexpr float Z_PIX_L = 5e-3f, Z_PIX_R = 42.5e-3f, Z_PIX_STEP = 0.1e-3;
+
 
 
 void initializeDisplay(const std::vector<unsigned int> &inputShape, imaging::DataType type) {
@@ -118,9 +115,12 @@ int main() noexcept {
         auto metadata = std::get<2>(result);
 
         // taps for Butterworth filter, 0.5, 1.5 * 6 MHz, order 2
-        const std::vector<float> BANDPASS_FILTER_COEFFS = {0.05892954, 0., -0.11785907, 0., 0.05892954};
+        const std::vector<float> INITIAL_FILTER_COEFFS = {0.05892954, 0., -0.11785907, 0., 0.05892954};
         // Low-pass CIC filter coefficients (DDC).
-        const std::vector<float> LOWPASS_FILTER_COEFFS = {1, 2, 3, 4, 3, 2, 1};
+        const std::vector<float> DDC_FILTER_COEFFS = {1, 2, 3, 4, 3, 2, 1};
+        constexpr float X_PIX_L = -19.0e-3f, X_PIX_R = 19.0e-3f, X_PIX_STEP = 0.1e-3;
+        // grid OZ coordinates
+        constexpr float Z_PIX_L = 5e-3f, Z_PIX_R = 42.5e-3f, Z_PIX_STEP = 0.1e-3;
         PipelineRunner runner {
             outputDef,
             metadata,
@@ -128,7 +128,9 @@ int main() noexcept {
             Pipeline{{
                 RemapToLogicalOrder{},
                 Transpose{},
-                BandpassFilter(::imaging::NdArray::asarray(BANDPASS_FILTER_COEFFS))
+                BandpassFilter(::imaging::NdArray::asarray(INITIAL_FILTER_COEFFS)),
+                DigitalDownConversion(::imaging::NdArray::asarray(DDC_FILTER_COEFFS),
+                                      ::imaging::NdArray::asarray<unsigned>(4)),
             }}
         };
 

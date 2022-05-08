@@ -85,8 +85,6 @@ set(MAIN_SRC
 )
 
 
-
-
 add_executable(pwi_example ${MAIN_SRC})
 target_include_directories(pwi_example PRIVATE ${ARRUS_INCLUDE_PATH} ${CMAKE_SOURCE_DIR})
 target_link_directories(pwi_example PRIVATE ${ARRUS_LIB_PATH})

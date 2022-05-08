@@ -15,6 +15,7 @@ namespace imaging {
  *
  * The center of coordinate system is located in the center of probe.
  *
+ * @param pitch: distance between two consecutive elements
  * @param curvatureRadius: probe's curvature radius, inf means a flat probe
  * @param axis: axis along which probe elements are located.
  */
@@ -34,13 +35,23 @@ public:
 
     enum class Axis { OX, OY };
 
-    ProbeModelExt(uint16_t ordinal, arrus::devices::ProbeModel arrusProbe, uint16_t startChannel, uint16_t stopChannel,
-                  float curvatureRadius = std::numeric_limits<float>::infinity(), Axis axis = Axis::OX)
-        : ordinal(ordinal), arrusProbe(std::move(arrusProbe)), startChannel(startChannel), stopChannel(stopChannel),
-          curvatureRadius(curvatureRadius), axis(axis) {
-        // Note: only 1D array is supported here
-        auto nElements = arrusProbe.getNumberOfElements()[0];
-        float pitch = (float)(arrusProbe.getPitch()[0]);
+    ProbeModelExt(uint16_t ordinal, arrus::devices::ProbeModel probe, uint16_t startChannel, uint16_t stopChannel,
+                  float pitch, float curvatureRadius = std::numeric_limits<float>::infinity(), Axis axis = Axis::OX)
+        : ordinal(ordinal), arrusProbe(std::move(probe)), startChannel(startChannel), stopChannel(stopChannel),
+          pitch(pitch), curvatureRadius(curvatureRadius), axis(axis) {
+        if(startChannel >= stopChannel) {
+            throw std::runtime_error("Start channel should be less than stop channel: "
+                                     + std::to_string(startChannel) + " vs. "
+                                     + std::to_string(startChannel));
+        }
+        if(stopChannel > arrusProbe.getNumberOfElements()[0]) {
+            throw std::runtime_error("The stop channel parameter should not be greater than arrus "
+                                     "probe definition size: "
+                                     + std::to_string(stopChannel) + " vs. "
+                                     + std::to_string(arrusProbe.getNumberOfElements()[0]));
+        }
+
+        auto nElements = stopChannel-startChannel;
 
         NdArray elementPosition = NdArray::arange(-((float)nElements-1)/2.0f, ((float)nElements/2.0f))*pitch;
         if(curvatureRadius == std::numeric_limits<float>::infinity()) {
@@ -55,6 +66,9 @@ public:
             this->z = this->angle.cos()*curvatureRadius;
             this->z = this->z-this->z.min<float>();
         }
+        fullAperture = std::vector<bool>(arrusProbe.getNumberOfElements()[0], false);
+
+        std::fill(std::begin(fullAperture)+startChannel, std::begin(fullAperture)+stopChannel, true);
     }
 
     /**
@@ -115,6 +129,7 @@ private:
     std::vector<bool> fullAperture;
     NdArray x, y, z, angle;
     float curvatureRadius;
+    float pitch;
     Axis axis;
 };
 }// namespace imaging

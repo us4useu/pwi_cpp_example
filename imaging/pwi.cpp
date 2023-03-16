@@ -135,7 +135,7 @@ upload(Session *session, const PwiSequence &seq, const std::vector<ProbeModelExt
         throw std::runtime_error("The output buffer should have at least one element.");
     }
     auto outputShape = buffer->getElement(0)->getData().getShape().getValues();
-    NdArrayDef outputDef{outputShape, DataType::INT16};
+    NdArrayDef outputDef(outputShape, DataType::INT16);
     return {result.getBuffer(), outputDef, metadataBuilder.buildSharedPtr()};
 }
 }

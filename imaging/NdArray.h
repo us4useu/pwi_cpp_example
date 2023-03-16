@@ -13,7 +13,7 @@
 
 namespace arrus_example_imaging {
 
-typedef std::vector<unsigned> DataShape;
+typedef std::vector<size_t> DataShape;
 typedef DataType DataType;
 
 
@@ -22,7 +22,7 @@ class NdArrayDef {
 public:
     NdArrayDef() = default;
 
-    NdArrayDef(DataShape Shape, DataType Type) : shape(std::move(Shape)), type(Type) {}
+    NdArrayDef(arrus_example_imaging::DataShape Shape, DataType Type) : shape(std::move(Shape)), type(Type) {}
 
     const DataShape &getShape() const { return shape; }
     DataType getType() const { return type; }
@@ -50,42 +50,42 @@ public:
     }
 
     static NdArray asarray(const std::vector<double> &values, bool isGpu = false) {
-        NdArrayDef def{{(unsigned)values.size(), }, DataType::FLOAT64};
+        NdArrayDef def{{(size_t)values.size(), }, DataType::FLOAT64};
         return NdArray::asarray(def, values, isGpu);
     }
 
     static NdArray asarray(const std::vector<float> &values, bool isGpu = false) {
-        NdArrayDef def{{(unsigned)values.size(), }, DataType::FLOAT32};
+        NdArrayDef def{{(size_t)values.size(), }, DataType::FLOAT32};
         return NdArray::asarray(def, values, isGpu);
     }
 
     static NdArray asarray(const std::vector<int8_t> &values, bool isGpu = false) {
-        NdArrayDef def{{(unsigned)values.size(), }, DataType::INT8};
+        NdArrayDef def{{(size_t)values.size(), }, DataType::INT8};
         return NdArray::asarray(def, values, isGpu);
     }
 
     static NdArray asarray(const std::vector<uint8_t> &values, bool isGpu = false) {
-        NdArrayDef def{{(unsigned)values.size(), }, DataType::UINT8};
+        NdArrayDef def{{(size_t)values.size(), }, DataType::UINT8};
         return NdArray::asarray(def, values, isGpu);
     }
 
     static NdArray asarray(const std::vector<uint16_t> &values, bool isGpu = false) {
-        NdArrayDef def{{(unsigned)values.size(), }, DataType::UINT16};
+        NdArrayDef def{{(size_t)values.size(), }, DataType::UINT16};
         return NdArray::asarray(def, values, isGpu);
     }
 
     static NdArray asarray(const std::vector<int16_t> &values, bool isGpu = false) {
-        NdArrayDef def{{(unsigned)values.size(), }, DataType::INT16};
+        NdArrayDef def{{(size_t)values.size(), }, DataType::INT16};
         return NdArray::asarray(def, values, isGpu);
     }
 
     static NdArray asarray(const std::vector<int32_t> &values, bool isGpu = false) {
-        NdArrayDef def{{(unsigned)values.size(), }, DataType::INT32};
+        NdArrayDef def{{(size_t)values.size(), }, DataType::INT32};
         return NdArray::asarray(def, values, isGpu);
     }
 
     static NdArray asarray(const std::vector<uint32_t> &values, bool isGpu = false) {
-        NdArrayDef def{{(unsigned)values.size(), }, DataType::UINT32};
+        NdArrayDef def{{(size_t)values.size(), }, DataType::UINT32};
         return NdArray::asarray(def, values, isGpu);
     }
 
@@ -211,7 +211,7 @@ public:
 
     template<typename T> const T *getConstPtr() const { return (T *) ptr; }
 
-    const std::vector<unsigned> &getShape() const { return shape; }
+    const std::vector<size_t> &getShape() const { return shape; }
 
     DataType getDataType() const { return dataType; }
 

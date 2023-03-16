@@ -38,7 +38,7 @@ Display2D mainDisplay;
 
 // grid OX coordinates
 
-void initializeDisplay(const std::vector<unsigned int> &inputShape, ::arrus_example_imaging::DataType type) {
+void initializeDisplay(const std::vector<size_t> &inputShape, ::arrus_example_imaging::DataType type) {
     if(inputShape.size() < 2) {
         throw std::runtime_error("PipelineRunner's output shape should have at least 2 dimensions.");
     }
@@ -60,11 +60,11 @@ int main() noexcept {
         // that uses ARRUS into try ..catch clauses.
         ::arrus::setLoggerFactory(std::make_shared<MyCustomLoggerFactory>(::arrus::LogSeverity::INFO));
 
-        auto session = ::arrus::session::createSession("C:/Users/Public/us4r.prototxt");
+        auto session = ::arrus::session::createSession("/home/pjarosik/src/x-files/customers/brainlab/us4r.prototxt");
         auto us4r = (::arrus::devices::Us4R *) session->getDevice("/Us4R:0");
 
         auto fullArray = us4r->getProbe(0)->getModel();
-        ProbeModelExt columnArray{0, fullArray, 0, 192, 0.245e-3f, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OX};
+        ProbeModelExt columnArray{0, fullArray, 0, 128, 0.245e-3f, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OX};
 //        ProbeModelExt rowArray{1, fullArray, 128, 256, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OY};
         std::vector<ProbeModelExt> arrayModels = {columnArray, };// rowArray};
 

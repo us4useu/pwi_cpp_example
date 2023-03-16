@@ -45,11 +45,11 @@ public:
         windowClosed.wait(lock);
     }
 
-    void setNrows(unsigned int nrows) {
+    void setNrows(size_t nrows) {
         Display2D::nrows = nrows;
     }
 
-    void setNcols(unsigned int ncols) {
+    void setNcols(size_t ncols) {
         Display2D::ncols = ncols;
     }
 

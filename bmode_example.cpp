@@ -38,7 +38,7 @@ Display2D mainDisplay;
 
 // grid OX coordinates
 
-void initializeDisplay(const std::vector<unsigned int> &inputShape, ::arrus_example_imaging::DataType type) {
+void initializeDisplay(const std::vector<size_t> &inputShape, ::arrus_example_imaging::DataType type) {
     if(inputShape.size() < 2) {
         throw std::runtime_error("PipelineRunner's output shape should have at least 2 dimensions.");
     }
@@ -60,11 +60,11 @@ int main() noexcept {
         // that uses ARRUS into try ..catch clauses.
         ::arrus::setLoggerFactory(std::make_shared<MyCustomLoggerFactory>(::arrus::LogSeverity::INFO));
 
-        auto session = ::arrus::session::createSession("C:/Users/Public/us4r.prototxt");
+        auto session = ::arrus::session::createSession("/home/pjarosik/us4r.prototxt");
         auto us4r = (::arrus::devices::Us4R *) session->getDevice("/Us4R:0");
 
         auto fullArray = us4r->getProbe(0)->getModel();
-        ProbeModelExt columnArray{0, fullArray, 0, 192, 0.245e-3f, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OX};
+        ProbeModelExt columnArray{0, fullArray, 0, 128, 0.245e-3f, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OX};
 //        ProbeModelExt rowArray{1, fullArray, 128, 256, std::numeric_limits<float>::infinity(), ProbeModelExt::Axis::OY};
         std::vector<ProbeModelExt> arrayModels = {columnArray, };// rowArray};
 
@@ -121,22 +121,21 @@ int main() noexcept {
         constexpr float Z_LEFT_BORDER = 5e-3f, Z_RIGHT_BORDER = 42.5e-3f, Z_STEP = 0.1e-3;
         const std::vector<float> xGrid = arange(X_LEFT_BORDER, X_RIGHT_BORDER, X_STEP);
         const std::vector<float> zGrid = arange(Z_LEFT_BORDER, Z_RIGHT_BORDER, Z_STEP);
+
+
         PipelineRunner runner {
             outputDef,
             metadata,
             // Processing steps to be performed on GPU.
-            Pipeline{{
-                RemapToLogicalOrder{},
+            Pipeline({
+		RemapToLogicalOrder{},
                 Transpose{},
                 BandpassFilter(::arrus_example_imaging::NdArray::asarray(INITIAL_FILTER_COEFFS)),
-                DigitalDownConversion(::arrus_example_imaging::NdArray::asarray(DDC_FILTER_COEFFS),
-                                      ::arrus_example_imaging::NdArray::asarray<unsigned>(4)),
-                ReconstructHri(::arrus_example_imaging::NdArray::asarray(xGrid),
-                               ::arrus_example_imaging::NdArray::asarray(zGrid)),
+		arrus_example_imaging::DigitalDownConversion(::arrus_example_imaging::NdArray::asarray(DDC_FILTER_COEFFS), ::arrus_example_imaging::NdArray::asarray<unsigned>(4)),
+		ReconstructHri(::arrus_example_imaging::NdArray::asarray(xGrid), ::arrus_example_imaging::NdArray::asarray(zGrid)),
                 EnvelopeDetection(),
-                ToBMode(::arrus_example_imaging::NdArray::asarray<float>(0),
-                        ::arrus_example_imaging::NdArray::asarray<float>(80))
-            }}
+                ToBMode(::arrus_example_imaging::NdArray::asarray<float>(0), ::arrus_example_imaging::NdArray::asarray<float>(80))
+            })
         };
 
         // Set dimensions of the window with B-mode image.

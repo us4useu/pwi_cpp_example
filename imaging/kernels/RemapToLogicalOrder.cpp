@@ -6,7 +6,6 @@ namespace arrus_example_imaging {
 
 RemapToLogicalOrderKernel::RemapToLogicalOrderKernel(KernelConstructionContext &ctx) : Kernel(ctx) {
     auto fcm = ctx.getInputMetadata()->getObject<arrus::devices::FrameChannelMapping>("frameChannelMapping");
-
     // Determining output dimensions.
     auto rawSequence = ctx.getInputMetadata()->getObject<arrus::ops::us4r::TxRxSequence>("rawSequence");
     // TODO Note: assumption that all TxRxs have the same number of samples. Validate that.

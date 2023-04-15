@@ -111,29 +111,33 @@ TxRxSequence createPwiSequence(const PwiSequence &seq, const std::vector<::arrus
  * @return a tuple: (output data buffer, output dimensions, output metadata)
  */
 std::tuple<std::shared_ptr<::arrus::framework::Buffer>, NdArrayDef, std::shared_ptr<Metadata>>
-upload(Session *session, const PwiSequence &seq, const std::vector<ProbeModelExt> &probes) {
+upload(Session *session, const PwiSequence &seq, const std::vector<ProbeModelExt> &probes,
+       std::optional<DigitalDownConversion> ddc) {
     auto *us4r = (::arrus::devices::Us4R *) session->getDevice("/Us4R:0");
 
     auto txRxSequence = createPwiSequence(seq, probes);
 
     DataBufferSpec outputBuffer{DataBufferSpec::Type::FIFO, 4};
-    Scheme scheme{txRxSequence, 2, outputBuffer, Scheme::WorkMode::HOST};
+
+    if(ddc.has_value()) {
+        Scheme scheme{txRxSequence, 2, outputBuffer, Scheme::WorkMode::HOST, ddc};
+    }
+    else {
+        Scheme scheme{txRxSequence, 2, outputBuffer, Scheme::WorkMode::HOST};
+    }
     auto result = session->upload(scheme);
 
     MetadataBuilder metadataBuilder;
     metadataBuilder.addObject(
         "frameChannelMapping",
         result.getConstMetadata()->get<::arrus::devices::FrameChannelMapping>("frameChannelMapping"));
-    metadataBuilder.setValue("samplingFrequency", us4r->getSamplingFrequency() / seq.getDownsamplingFactor());
+
+    metadataBuilder.setValue("samplingFrequency", us4r->getCurrentSamplingFrequency());
     metadataBuilder.addObject("sequence", std::make_shared<PwiSequence>(seq));
     metadataBuilder.addObject("rawSequence", std::make_shared<TxRxSequence>(txRxSequence));
     metadataBuilder.addObject("probeModels", std::make_shared<std::vector<ProbeModelExt>>(probes));
-
     // Determine output size.
     auto buffer = std::static_pointer_cast<DataBuffer>(result.getBuffer());
-    if (buffer->getNumberOfElements() == 0) {
-        throw std::runtime_error("The output buffer should have at least one element.");
-    }
     auto outputShape = buffer->getElement(0)->getData().getShape().getValues();
     NdArrayDef outputDef(outputShape, DataType::INT16);
     return {result.getBuffer(), outputDef, metadataBuilder.buildSharedPtr()};

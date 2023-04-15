@@ -37,7 +37,6 @@ using namespace ::arrus_example_imaging;
 Display2D mainDisplay;
 
 // grid OX coordinates
-
 void initializeDisplay(const std::vector<size_t> &inputShape, ::arrus_example_imaging::DataType type) {
     if(inputShape.size() < 2) {
         throw std::runtime_error("PipelineRunner's output shape should have at least 2 dimensions.");
@@ -45,7 +44,6 @@ void initializeDisplay(const std::vector<size_t> &inputShape, ::arrus_example_im
     mainDisplay.setNrows(inputShape[inputShape.size()-2]);
     mainDisplay.setNcols(inputShape[inputShape.size()-1]);
     mainDisplay.setInputDataType(type);
-
 }
 
 int main() noexcept {

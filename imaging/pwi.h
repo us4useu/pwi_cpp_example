@@ -47,7 +47,9 @@ private:
  * Uploads a given PWI sequence on the devices in the session.
  */
 std::tuple<std::shared_ptr<::arrus::framework::Buffer>, NdArrayDef, std::shared_ptr<Metadata>>
-upload(::arrus::session::Session *session, const PwiSequence &seq, const std::vector<ProbeModelExt> &probes);
+upload(::arrus::session::Session *session, const PwiSequence &seq,
+       const std::vector<ProbeModelExt> &probes,
+       std::optional<DigitalDownConversion> ddc);
 
 }
 

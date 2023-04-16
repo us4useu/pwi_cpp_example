@@ -49,7 +49,7 @@ private:
 std::tuple<std::shared_ptr<::arrus::framework::Buffer>, NdArrayDef, std::shared_ptr<Metadata>>
 upload(::arrus::session::Session *session, const PwiSequence &seq,
        const std::vector<ProbeModelExt> &probes,
-       std::optional<DigitalDownConversion> ddc);
+       std::optional<::arrus::ops::us4r::DigitalDownConversion> ddc = std::nullopt);
 
 }
 

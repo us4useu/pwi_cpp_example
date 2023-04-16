@@ -6,9 +6,9 @@ project(cpp_example LANGUAGES CXX CUDA)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_BINARY_DIR}")
 find_package(OpenCV REQUIRED)
 # TODO change the below path appropriately.
-set(ARRUS_INCLUDE_PATH "C:/Users/Public/arrus-releases/arrus-0.7.0-dev20220421-win64-release/include")
+set(ARRUS_INCLUDE_PATH "/home/pjarosik/src/arrus/install/include")
 # TODO change the below path appropriately.
-set(ARRUS_LIB_PATH "C:/Users/Public/arrus-releases/arrus-0.7.0-dev20220421-win64-release/lib64")
+set(ARRUS_LIB_PATH "/home/pjarosik/src/arrus/install/lib64")
 
 set(GPU_SRC
     # Imaging
@@ -20,6 +20,8 @@ set(GPU_SRC
     imaging/kernels/ReconstructHri.cu
     imaging/kernels/EnvelopeDetection.cu
     imaging/kernels/ToBmode.cu
+    imaging/kernels/RemapToLogicalOrder2.cu
+    imaging/kernels/Amplitude.cu
 )
 
 add_library(pwi_example_gpu ${GPU_SRC})
@@ -64,6 +66,8 @@ set(MAIN_SRC
     imaging/ops/ReconstructHri.h
     imaging/ops/EnvelopeDetection.h
     imaging/ops/ToBMode.h
+    imaging/ops/RemapToLogicalOrder2.h
+    imaging/ops/Amplitude.h
 
     imaging/kernels/RemapToLogicalOrder.cpp
     imaging/kernels/Transpose.cpp
@@ -72,6 +76,8 @@ set(MAIN_SRC
     imaging/kernels/ReconstructHri.cpp
     imaging/kernels/EnvelopeDetection.cpp
     imaging/kernels/ToBmode.cpp
+    imaging/kernels/RemapToLogicalOrder2.cpp
+    imaging/kernels/Amplitude.cpp
 
     imaging/kernels/RemapToLogicalOrder.h
     imaging/kernels/Transpose.h
@@ -80,6 +86,8 @@ set(MAIN_SRC
     imaging/kernels/ReconstructHri.h
     imaging/kernels/EnvelopeDetection.h
     imaging/kernels/ToBmode.h
+    imaging/kernels/RemapToLogicalOrder2.h
+    imaging/kernels/Amplitude.h
 )
 
 # RF data example.
@@ -94,4 +102,9 @@ target_include_directories(bmode_example PRIVATE ${ARRUS_INCLUDE_PATH} ${CMAKE_S
 target_link_directories(bmode_example PRIVATE ${ARRUS_LIB_PATH})
 target_link_libraries(bmode_example PRIVATE pwi_example_gpu opencv::opencv arrus-core)
 
+# RF data example.
+add_executable(ddc_example ddc_example.cpp ${MAIN_SRC})
+target_include_directories(ddc_example PRIVATE ${ARRUS_INCLUDE_PATH} ${CMAKE_SOURCE_DIR})
+target_link_directories(ddc_example PRIVATE ${ARRUS_LIB_PATH})
+target_link_libraries(ddc_example PRIVATE pwi_example_gpu opencv::opencv arrus-core)
 

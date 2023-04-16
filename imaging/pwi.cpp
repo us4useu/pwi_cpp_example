@@ -119,13 +119,15 @@ upload(Session *session, const PwiSequence &seq, const std::vector<ProbeModelExt
 
     DataBufferSpec outputBuffer{DataBufferSpec::Type::FIFO, 4};
 
+    std::optional<Scheme> scheme;
+
     if(ddc.has_value()) {
-        Scheme scheme{txRxSequence, 2, outputBuffer, Scheme::WorkMode::HOST, ddc};
+        scheme = Scheme{txRxSequence, 2, outputBuffer, Scheme::WorkMode::HOST, ddc.value()};
     }
     else {
-        Scheme scheme{txRxSequence, 2, outputBuffer, Scheme::WorkMode::HOST};
+        scheme = Scheme{txRxSequence, 2, outputBuffer, Scheme::WorkMode::HOST};
     }
-    auto result = session->upload(scheme);
+    auto result = session->upload(scheme.value());
 
     MetadataBuilder metadataBuilder;
     metadataBuilder.addObject(

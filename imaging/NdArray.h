@@ -16,8 +16,6 @@ namespace arrus_example_imaging {
 typedef std::vector<size_t> DataShape;
 typedef DataType DataType;
 
-
-
 class NdArrayDef {
 public:
     NdArrayDef() = default;

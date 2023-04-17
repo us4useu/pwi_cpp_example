@@ -24,6 +24,7 @@ set(GPU_SRC
     imaging/kernels/ToComplex.cu
     imaging/kernels/Real.cu
     imaging/kernels/Imag.cu
+    imaging/kernels/Phase.cu
 )
 
 add_library(pwi_example_gpu ${GPU_SRC})
@@ -72,6 +73,7 @@ set(MAIN_SRC
     imaging/ops/ToComplex.h
     imaging/ops/Real.h
     imaging/ops/Imag.h
+    imaging/ops/Phase.h
 
     imaging/kernels/RemapToLogicalOrder.cpp
     imaging/kernels/Transpose.cpp
@@ -84,6 +86,7 @@ set(MAIN_SRC
     imaging/kernels/ToComplex.cpp
     imaging/kernels/Real.cpp
     imaging/kernels/Imag.cpp
+    imaging/kernels/Phase.cpp
 
     imaging/kernels/RemapToLogicalOrder.h
     imaging/kernels/Transpose.h
@@ -96,6 +99,7 @@ set(MAIN_SRC
     imaging/kernels/ToComplex.h
     imaging/kernels/Real.h
     imaging/kernels/Imag.h
+    imaging/kernels/Phase.h
 )
 
 # RF data example.

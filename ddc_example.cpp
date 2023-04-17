@@ -18,6 +18,7 @@
 #include "imaging/ops/ToComplex.h"
 #include "imaging/ops/EnvelopeDetection.h"
 #include "imaging/ops/Real.h"
+#include "imaging/ops/Imag.h"
 
 #include "gui.h"
 #include "menu.h"
@@ -142,7 +143,8 @@ int main() noexcept {
             Pipeline{{
                 RemapToLogicalOrder2{},
                 ToComplex{},
-                Real{}
+                Imag{},
+//                Real{}
 //                EnvelopeDetection{}
                 // Angle{},
             }}

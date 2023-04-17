@@ -114,9 +114,16 @@ target_include_directories(bmode_example PRIVATE ${ARRUS_INCLUDE_PATH} ${CMAKE_S
 target_link_directories(bmode_example PRIVATE ${ARRUS_LIB_PATH})
 target_link_libraries(bmode_example PRIVATE pwi_example_gpu opencv::opencv arrus-core)
 
-# RF data example.
+# IQ data example.
 add_executable(ddc_example ddc_example.cpp ${MAIN_SRC})
 target_include_directories(ddc_example PRIVATE ${ARRUS_INCLUDE_PATH} ${CMAKE_SOURCE_DIR})
 target_link_directories(ddc_example PRIVATE ${ARRUS_LIB_PATH})
 target_link_libraries(ddc_example PRIVATE pwi_example_gpu opencv::opencv arrus-core)
+
+# Bmode example, reconstructed based on hardware IQ data.
+add_executable(ddc_bmode_example ddc_bmode_example.cpp ${MAIN_SRC})
+target_include_directories(ddc_bmode_example PRIVATE ${ARRUS_INCLUDE_PATH} ${CMAKE_SOURCE_DIR})
+target_link_directories(ddc_bmode_example PRIVATE ${ARRUS_LIB_PATH})
+target_link_libraries(ddc_bmode_example PRIVATE pwi_example_gpu opencv::opencv arrus-core)
+
 

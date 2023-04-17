@@ -15,7 +15,9 @@
 #include "imaging/ProbeModelExt.h"
 
 #include "imaging/ops/RemapToLogicalOrder2.h"
-#include "imaging/ops/Amplitude.h"
+#include "imaging/ops/ToComplex.h"
+#include "imaging/ops/EnvelopeDetection.h"
+#include "imaging/ops/Real.h"
 
 #include "gui.h"
 #include "menu.h"
@@ -95,7 +97,7 @@ int main() noexcept {
             // If the total PRI for a given sequence is smaller than SRI - the last TX/RX
             // pri will be increased by SRI-sum(PRI)
             50e-3,    // sequence repetition interval (an inverse of the actual b-mode frame rate) [s]
-            {0, 4096},// sample range (start sample, end sample)
+            {0, 1024},// sample range (start sample, end sample)
         };
 
         // DDC
@@ -139,10 +141,10 @@ int main() noexcept {
             // Processing steps to be performed on GPU.
             Pipeline{{
                 RemapToLogicalOrder2{},
-                Amplitude{},
+                ToComplex{},
+                Real{}
+//                EnvelopeDetection{}
                 // Angle{},
-                // InPhase{},
-                // Quadrature{},
             }}
         };
 

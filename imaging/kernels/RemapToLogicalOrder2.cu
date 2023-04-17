@@ -31,11 +31,11 @@ extern "C" __global__ void arrusRemap2(short *out,
                                        const unsigned int *nFramesUs4OEM,
                                        const unsigned nSequences,
                                        const unsigned nFrames,
-                                       const unsigned nSamples,
                                        const unsigned nChannels,
+                                       const unsigned nSamples,
                                        const unsigned nComponents) {
     // TODO temporarily assuming, that maximum number of components == 2
-    __shared__ short tile[REMAP2_BLOCK_TILE_DIM][REMAP2_BLOCK_TILE_DIM][2]; // NOTE: this is also the runtime block size.
+    __shared__ short tile[REMAP2_BLOCK_TILE_DIM][REMAP2_BLOCK_TILE_DIM][2];
 
     // gridDim.x*32 ~= number of channels
     // gridDim.y*32 ~= number of samples
@@ -110,8 +110,8 @@ void RemapToLogicalOrder2Functor::operator()(NdArray &output,
                                             const NdArray &nFramesUs4OEM,
                                             const unsigned nSequences,
                                             const unsigned nFrames,
-                                            const unsigned nSamples,
                                             const unsigned nChannels,
+                                            const unsigned nSamples,
                                             const unsigned nComponents,
                                             cudaStream_t stream) {
     dim3 block(REMAP2_BLOCK_TILE_DIM, REMAP2_BLOCK_TILE_DIM);
@@ -130,8 +130,8 @@ void RemapToLogicalOrder2Functor::operator()(NdArray &output,
         nFramesUs4OEM.getConstPtr<uint32_t>(),
         nSequences,
         nFrames,
-        nSamples,
         nChannels,
+        nSamples,
         nComponents
     );
     CUDA_ASSERT(cudaGetLastError());

@@ -21,7 +21,8 @@ set(GPU_SRC
     imaging/kernels/EnvelopeDetection.cu
     imaging/kernels/ToBmode.cu
     imaging/kernels/RemapToLogicalOrder2.cu
-    imaging/kernels/Amplitude.cu
+    imaging/kernels/ToComplex.cu
+    imaging/kernels/Real.cu
 )
 
 add_library(pwi_example_gpu ${GPU_SRC})
@@ -67,7 +68,8 @@ set(MAIN_SRC
     imaging/ops/EnvelopeDetection.h
     imaging/ops/ToBMode.h
     imaging/ops/RemapToLogicalOrder2.h
-    imaging/ops/Amplitude.h
+    imaging/ops/ToComplex.h
+    imaging/ops/Real.h
 
     imaging/kernels/RemapToLogicalOrder.cpp
     imaging/kernels/Transpose.cpp
@@ -77,7 +79,8 @@ set(MAIN_SRC
     imaging/kernels/EnvelopeDetection.cpp
     imaging/kernels/ToBmode.cpp
     imaging/kernels/RemapToLogicalOrder2.cpp
-    imaging/kernels/Amplitude.cpp
+    imaging/kernels/ToComplex.cpp
+    imaging/kernels/Real.cpp
 
     imaging/kernels/RemapToLogicalOrder.h
     imaging/kernels/Transpose.h
@@ -87,7 +90,8 @@ set(MAIN_SRC
     imaging/kernels/EnvelopeDetection.h
     imaging/kernels/ToBmode.h
     imaging/kernels/RemapToLogicalOrder2.h
-    imaging/kernels/Amplitude.h
+    imaging/kernels/ToComplex.h
+    imaging/kernels/Real.h
 )
 
 # RF data example.

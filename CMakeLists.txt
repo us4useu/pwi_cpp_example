@@ -126,4 +126,11 @@ target_include_directories(ddc_bmode_example PRIVATE ${ARRUS_INCLUDE_PATH} ${CMA
 target_link_directories(ddc_bmode_example PRIVATE ${ARRUS_LIB_PATH})
 target_link_libraries(ddc_bmode_example PRIVATE pwi_example_gpu opencv::opencv arrus-core)
 
+# Single-element SSTA.
+add_executable(ssta_example ssta_example.cpp ${MAIN_SRC})
+target_include_directories(ssta_example PRIVATE ${ARRUS_INCLUDE_PATH} ${CMAKE_SOURCE_DIR})
+target_link_directories(ssta_example PRIVATE ${ARRUS_LIB_PATH})
+target_link_libraries(ssta_example PRIVATE pwi_example_gpu opencv::opencv arrus-core)
+
+
 

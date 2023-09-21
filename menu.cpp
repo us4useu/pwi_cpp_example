@@ -75,7 +75,7 @@ void setLnaGain(Us4R *us4r) {
     }
 }
 
-void setLinearTgc(Us4R *us4r, const ::arrus_example_imaging::PwiSequence &seq) {
+void setLinearTgc(Us4R *us4r, float speedOfSound, float sampleRangeEnd) {
     try {
         float tgcStart, tgcSlope;
         std::cout << "TGC curve start value [dB]" << std::endl;
@@ -83,7 +83,7 @@ void setLinearTgc(Us4R *us4r, const ::arrus_example_imaging::PwiSequence &seq) {
         std::cout << "TGC curve slope [dB/m]" << std::endl;
         std::cin >> tgcSlope;
         std::vector<float> tgcCurve = getLinearTGCCurve(
-            tgcStart, tgcSlope, SAMPLING_FREQUENCY, seq.getSpeedOfSound(), seq.getSampleRange().second);
+            tgcStart, tgcSlope, SAMPLING_FREQUENCY, speedOfSound, sampleRangeEnd);
 
         std::cout << "Applying TGC curve: " << std::endl;
         for(auto &value: tgcCurve) {
@@ -98,7 +98,7 @@ void setLinearTgc(Us4R *us4r, const ::arrus_example_imaging::PwiSequence &seq) {
     }
 }
 
-void runMainMenu(Us4R *us4r, const ::arrus_example_imaging::PwiSequence &sequence) {
+void runMainMenu(Us4R *us4r, float speedOfSound, float sampleRangeEnd) {
     // Here the main thread waits until user presses 'q' button.
     // All the processing and displaying is done by callback threads.
     char lastChar = 0;
@@ -121,7 +121,7 @@ void runMainMenu(Us4R *us4r, const ::arrus_example_imaging::PwiSequence &sequenc
                 break;
             case 't':
                 // Set TGC curve (linear)
-                setLinearTgc(us4r, sequence);
+                setLinearTgc(us4r, speedOfSound, sampleRangeEnd);
                 break;
             case 'a':
                 setActiveTermination(us4r);
@@ -145,4 +145,8 @@ void runMainMenu(Us4R *us4r, const ::arrus_example_imaging::PwiSequence &sequenc
                 std::cerr << "Unknown command: " << lastChar << std::endl;
         }
     }
+}
+
+void runMainMenu(Us4R *us4r, const ::arrus_example_imaging::PwiSequence &seq) {
+    runMainMenu(us4r, seq.getSpeedOfSound(), seq.getSampleRange().second);
 }

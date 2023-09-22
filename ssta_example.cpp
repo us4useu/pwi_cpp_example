@@ -50,7 +50,7 @@ void initializeDisplay(const std::vector<size_t> &inputShape, ::arrus_example_im
 }
 
 constexpr size_t apertureSize = 128;
-constexpr size_t nTx = 256;
+constexpr size_t nTx = 128;
 constexpr size_t nSamples = 2048;
 bool saveOnDisk = true;
 
@@ -72,9 +72,6 @@ int main() noexcept {
         // The below will give the total number of channels in the system (256 for us4R-lite).
         auto nChannels = us4r->getProbe(0)->getModel().getNumberOfElements().product();
 
-        ::arrus::BitMask rxApertureOX(nChannels, false);
-        // RX aperture [0, 128) -- OX elements.
-        for(int i = 0; i < 128; ++i) {rxApertureOX[i] = true;}
         ::arrus::BitMask rxApertureOY(nChannels, false);
         // RX aperture [128, 256) -- OY elements.
         for(int i = 128; i < 256; ++i) {rxApertureOY[i] = true;}
@@ -84,15 +81,7 @@ int main() noexcept {
         float speedOfSound = 1500; // [m/s]
 
         std::vector<TxRx> txrxs;
-        // TX: elements from 128 to 256, RX: rxApertureOX
-        for(int tx = 128; tx < 256; ++tx) {
-            std::vector<float> delays(nChannels, 0.0f);
-            arrus::BitMask txAperture(nChannels, false);
-            txAperture[tx] = true;
-            txrxs.emplace_back(Tx(txAperture, delays, pulse), Rx(rxApertureOX, sampleRange), 200e-6f);
-        }
-
-        // TX: elements from 0 to 128, RX: rxApertureOY
+        // TX: elements from 0 to 128 (OX), RX: rxApertureOY
         for(int tx = 0; tx < 128; ++tx) {
             std::vector<float> delays(nChannels, 0.0f);
             arrus::BitMask txAperture(nChannels, false);
